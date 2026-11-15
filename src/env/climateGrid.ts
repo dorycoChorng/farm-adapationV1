@@ -2,7 +2,7 @@ import { POWER_BASE } from './power';
 
 /**
  * Rainfall and sunlight map overlays from NASA POWER's regional climatology API: long-term
- * yearly averages on POWER's 0.5° grid (about 55 km), the same source and averaging period
+ * yearly averages on POWER's native 0.5° × 0.625° grid (about 55 × 70 km), the same source and averaging period
  * as the per-place numbers in an analysis. POWER limits a regional request to one
  * parameter and about 4.5° × 4.5°, so the map is filled in 4° blocks, fetched one at a
  * time (POWER allows about 30 climatology requests a minute) and kept for the session.
@@ -22,8 +22,9 @@ const PARAM: Record<ClimateLayer, { name: string; toUnit: (annPerDay: number) =>
 export const BLOCK_DEG = 4;
 /** Most blocks fetched for one view; zoomed further out, the map asks the user to zoom in. */
 export const MAX_BLOCKS = 12;
-/** POWER's grid spacing. */
-const CELL_DEG = 0.5;
+/** POWER's native grid for these parameters (MERRA-2): 0.5° of latitude by 0.625° of longitude. */
+const CELL_LAT = 0.5;
+const CELL_LON = 0.625;
 
 export interface GridCell {
   w: number;
@@ -64,10 +65,10 @@ export function blocksFor([w, s, e, n]: [number, number, number, number]): [numb
 }
 
 const cell = (lon: number, lat: number, v: number): GridCell => ({
-  w: lon - CELL_DEG / 2,
-  e: lon + CELL_DEG / 2,
-  s: lat - CELL_DEG / 2,
-  n: lat + CELL_DEG / 2,
+  w: lon - CELL_LON / 2,
+  e: lon + CELL_LON / 2,
+  s: lat - CELL_LAT / 2,
+  n: lat + CELL_LAT / 2,
   v,
 });
 

@@ -24,13 +24,13 @@ describe('NASA POWER rainfall and sunlight grid', () => {
     const cells = parseRegional(
       {
         features: [
-          { geometry: { coordinates: [104.75, 11.25, 10] }, properties: { parameter: { PRECTOTCORR: { ANN: 4 } } } },
-          { geometry: { coordinates: [105.25, 11.25, 10] }, properties: { parameter: { PRECTOTCORR: { ANN: -999 } } } },
+          { geometry: { coordinates: [104.375, 11.0, 10] }, properties: { parameter: { PRECTOTCORR: { ANN: 4 } } } },
+          { geometry: { coordinates: [105.0, 11.0, 10] }, properties: { parameter: { PRECTOTCORR: { ANN: -999 } } } },
         ],
       },
       'rainfall',
     );
-    expect(cells).toEqual([{ w: 104.5, e: 105, s: 11, n: 11.5, v: 1461 }]);
+    expect(cells).toEqual([{ w: 104.0625, e: 104.6875, s: 10.75, n: 11.25, v: 1461 }]);
   });
 
   it('reads CSV answers', () => {
@@ -39,8 +39,8 @@ describe('NASA POWER rainfall and sunlight grid', () => {
       'NASA/POWER climatology',
       '-END HEADER-',
       'PARAMETER,LAT,LON,JAN,FEB,MAR,APR,MAY,JUN,JUL,AUG,SEP,OCT,NOV,DEC,ANN',
-      'ALLSKY_SFC_SW_DWN,11.25,104.75,5,5,6,6,5,4,4,4,4,4,5,5,4.83',
+      'ALLSKY_SFC_SW_DWN,11.0,104.375,5,5,6,6,5,4,4,4,4,4,5,5,4.83',
     ].join('\n');
-    expect(parseRegional(csv, 'sunlight')).toEqual([{ w: 104.5, e: 105, s: 11, n: 11.5, v: 4.83 }]);
+    expect(parseRegional(csv, 'sunlight')).toEqual([{ w: 104.0625, e: 104.6875, s: 10.75, n: 11.25, v: 4.83 }]);
   });
 });
