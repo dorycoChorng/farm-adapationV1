@@ -26,7 +26,7 @@ export const farmEn = {
   'crops.commonOnly': 'Common crops ({n})',
   'crops.allCrops': 'All crops ({n})',
   'crops.commonNote':
-    'Well-known crops that farmers in this country grow, from FAO crop statistics (FAOSTAT 2019–2021 via GAEZ v5). Fruits, vegetables and pulses are counted as groups, so the statistics can't confirm each single fruit or vegetable listed. Search looks through all crops.',
+    'Well-known crops that farmers in this country grow, from FAO crop statistics (FAOSTAT 2019–2021 via GAEZ v5). Fruits, vegetables and pulses are counted as groups, so the statistics can’t confirm each single fruit or vegetable listed. Search looks through all crops.',
   'crops.sowWindow': 'Good months to sow: {months}',
   'crops.sowAnyMonth': 'Can be sown in any month',
   'crops.plantAnyTime': 'Grows for years: plant at any time, best at the start of the rains',
