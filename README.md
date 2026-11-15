@@ -160,7 +160,7 @@ Every push is deployed by Vercel as a web preview (`vercel.json` builds `expo ex
 
 **Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them. For the plant scan, add `PLANTNET_API_KEY` under Settings → Environment Variables.
 
-**Caching on Vercel:** the `/worldcover/`, `/gaez/` and `/soilgrids/` proxies send `CDN-Cache-Control`, so Vercel's CDN keeps each file it has fetched (a year for WorldCover 2021, 30 days for the others) and later visitors get it from the nearest edge instead of from S3, Google Cloud or ISRIC. To clear it after changing a proxy, use the project's Settings → Caches → Purge CDN Cache.
+**Caching on Vercel:** the `/soilgrids/` proxy sends `CDN-Cache-Control: max-age=2592000`, so Vercel's CDN keeps each soil answer for 30 days. The `/worldcover/` and `/gaez/` proxies must **not** be cached: the app reads those GeoTIFFs in byte ranges, and Vercel's CDN caches a response by URL only, so a cached range would be served back for every other range of the file and the land-cover and crop readings would break. `vercel.json` turns caching off for them with `x-vercel-enable-rewrite-caching: 0` (Google Cloud's own `cache-control` header would otherwise switch it on). If you change a proxy, purge the old cache under Settings → Caches → Purge CDN Cache.
 
 ## Run on Android
 
