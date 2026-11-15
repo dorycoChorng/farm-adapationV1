@@ -12,7 +12,6 @@ import { join } from 'node:path';
 
 import { bundledLocalProduction, fetchLocalProduction } from '../gaez';
 import { landCoverTile, readLandCover, readTerrain, runLength } from '../rasters';
-import { fetchSoilFromMaps, parseSoilGrids } from '../soilgrids';
 import { LAND_COVER_CLASSES } from '../sources';
 import { type FetchRange, RasterNotFoundError } from '../tiff';
 import { readZones, zoneSummary } from '../zones';
@@ -35,19 +34,6 @@ const phnomPenh = { latitude: 11.5564, longitude: 104.9282 };
 
 live('live rasters', () => {
   jest.setTimeout(60000);
-
-  it('reads topsoil from the SoilGrids map service, and nothing at sea', async () => {
-    // Farmland south of Phnom Penh; SoilGrids leaves the built-up city itself empty.
-    const soil = parseSoilGrids(await fetchSoilFromMaps({ latitude: 11.3015, longitude: 104.8015 }, curlRange));
-    const ph = soil.properties.find((p) => p.key === 'phh2o')!.mean;
-    expect(ph).toBeGreaterThan(3);
-    expect(ph).toBeLessThan(10);
-    const fractions = ['clay', 'sand', 'silt'].map((k) => soil.properties.find((p) => p.key === k)!.mean!);
-    expect(fractions.reduce((a, b) => a + b, 0)).toBeGreaterThan(90);
-    expect(soil.textureClass).not.toBeNull();
-    const sea = parseSoilGrids(await fetchSoilFromMaps({ latitude: 5, longitude: 100 }, curlRange));
-    expect(sea.properties.every((p) => p.mean === null)).toBe(true);
-  });
 
   it('reads ESA WorldCover at a point and over a parcel', async () => {
     const point = await readLandCover(phnomPenh, null, curlRange);

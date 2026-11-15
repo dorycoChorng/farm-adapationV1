@@ -443,7 +443,6 @@ describe('environmental analysis and crop suitability', () => {
     await page.getByTestId('card-soil-test').getByText(/does not guess your soil/).waitFor();
     await page.getByTestId('fix-no-test').waitFor();
     assert.equal(await page.getByTestId('card-soil').count(), 0);
-    assert.equal(await page.getByTestId('card-hwsd').count(), 0);
     await shot(page, 'analysis-soil');
 
     // Seasons come from the monthly averages: with this synthetic rain, May–November are wet (≥ 100 mm).

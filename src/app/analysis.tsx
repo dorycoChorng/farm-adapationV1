@@ -31,7 +31,7 @@ import { getParcel } from '../db/repositories';
 import { ageInDays, analyzeLocation, type SectionKey } from '../env/analyze';
 import { appFetchJson, appFetchRange } from '../env/appFetch';
 import { countryProduction, GAEZ_GROUPS, GAEZ_PRICES, type GaezCode } from '../env/gaez';
-import { LAND_COVER_CLASSES, STALE_AFTER_DAYS, USED_SOURCES } from '../env/sources';
+import { LAND_COVER_CLASSES, SOURCES, STALE_AFTER_DAYS } from '../env/sources';
 import { cropById, cropEmoji, cropName, CROPS } from '../env/crops';
 import { plantNow, type Season, seasonsFor } from '../env/seasons';
 import { soilFixPlan } from '../env/soilFixes';
@@ -293,7 +293,7 @@ export default function AnalysisScreen() {
         <Card title={t('env.introTitle')} icon="information-circle" iconColor={colors.secondary} iconBg={colors.secondaryLight}>
           <Text style={type.body}>{t('env.introBody')}</Text>
           <View style={{ gap: 6, marginTop: spacing.md }}>
-            {USED_SOURCES.map((src) => (
+            {Object.values(SOURCES).map((src) => (
               <Text key={src.id} style={type.small}>
                 • {src.name} — {src.provider}
               </Text>

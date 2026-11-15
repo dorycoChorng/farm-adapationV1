@@ -9,14 +9,12 @@ import { join } from 'node:path';
 
 import { deflate } from 'pako';
 
-import { analyzeLocation, type FetchJson, HttpError, withRetry } from '../analyze';
+import { analyzeLocation, type FetchJson } from '../analyze';
 import { webUrl } from '../appFetch';
 import { CROPS, type CropProfile, cropById, cycleMonths, searchCrops } from '../crops';
 import { lastCompleteYear, parseClimatology, parseMonthlyRain, toKwhPerDay } from '../power';
 import { demCellSize, demPixel, hornSlope, landCoverTile, pointInRing, runLength, samplePoints, worldCoverTileUrl } from '../rasters';
 import { bundledLocalProduction, cellAreaHa, countryProduction, fetchLocalProduction, gaezCodeFor } from '../gaez';
-import { hwsdCovers, readHwsd } from '../hwsd';
-import { parseSoilGrids, usdaTexture } from '../soilgrids';
 import { plantNow, seasonalAssessment, seasonOf, seasonsFor } from '../seasons';
 import { classify, factorScore, landCheck, rankCrops, scoreCrop, siteWarnings } from '../suitability';
 import { clearTileCache, decodeSamples, type FetchRange, lzwDecode, openCog, pixelFor, RasterNotFoundError, readPixel } from '../tiff';
@@ -315,55 +313,6 @@ describe('NASA POWER parsing', () => {
   });
 });
 
-// ------------------------------------------------------------------ SoilGrids
-
-const layer = (name: string, d: number, values: [number | null, number | null, number | null]) => ({
-  name,
-  unit_measure: { d_factor: d },
-  depths: ['0-5cm', '5-15cm', '15-30cm'].map((label, i) => ({ label, values: { mean: values[i], 'Q0.05': values[i] === null ? null : values[i]! - 5, 'Q0.95': values[i] === null ? null : values[i]! + 5 } })),
-});
-
-const soilResponse = {
-  type: 'Feature',
-  properties: {
-    layers: [
-      layer('phh2o', 10, [50, 55, 60]),
-      layer('soc', 10, [200, 150, 100]),
-      layer('clay', 10, [300, 300, 300]),
-      layer('sand', 10, [300, 300, 300]),
-      layer('silt', 10, [400, 400, 400]),
-      layer('nitrogen', 100, [150, 120, 100]),
-      layer('cec', 10, [null, 100, 100]),
-    ],
-  },
-};
-
-describe('SoilGrids parsing', () => {
-  it('converts mapped units and averages 0–30 cm by layer thickness', () => {
-    const s = parseSoilGrids(soilResponse);
-    const ph = s.properties.find((p) => p.key === 'phh2o')!;
-    expect(ph.mean).toBe(Number(((5 * 5 + 5.5 * 10 + 6 * 15) / 30).toFixed(1)));
-    expect(s.properties.find((p) => p.key === 'clay')).toMatchObject({ mean: 30, unit: '%' });
-    expect(s.properties.find((p) => p.key === 'nitrogen')?.unit).toBe('g/kg');
-    // A missing depth leaves the 0–30 cm value missing rather than averaging what is left.
-    expect(s.properties.find((p) => p.key === 'cec')?.mean).toBeNull();
-    expect(s.textureClass).toBe('clay-loam');
-  });
-
-  it('classifies USDA soil textures', () => {
-    expect(usdaTexture(90, 5, 5)).toBe('sand');
-    expect(usdaTexture(40, 40, 20)).toBe('loam');
-    expect(usdaTexture(10, 70, 20)).toBe('silt-loam');
-    expect(usdaTexture(20, 20, 60)).toBe('clay');
-    expect(usdaTexture(65, 20, 15)).toBe('sandy-loam');
-    expect(usdaTexture(5, 50, 45)).toBe('silty-clay');
-  });
-
-  it('rejects unexpected responses', () => {
-    expect(() => parseSoilGrids({ detail: 'error' })).toThrow();
-  });
-});
-
 // ------------------------------------------------------------------ suitability
 
 // A made-up crop for testing the arithmetic; real profiles come from ECOCROP.
@@ -514,30 +463,8 @@ describe('land-cover map tiles', () => {
   });
 });
 
-describe('busy servers and the web proxy', () => {
-  const sleep = jest.fn(async () => undefined);
-
-  it('retries 429, 5xx and dropped connections, then gives up', async () => {
-    const run = jest.fn().mockRejectedValueOnce(new HttpError(503, null)).mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValue('ok');
-    expect(await withRetry(run, { sleep })).toBe('ok');
-    expect(run).toHaveBeenCalledTimes(3);
-    const always = jest.fn().mockRejectedValue(new HttpError(429, 5));
-    await expect(withRetry(always, { sleep })).rejects.toThrow('HTTP 429');
-    expect(always).toHaveBeenCalledTimes(3);
-    expect(sleep).toHaveBeenCalledWith(5000); // honours Retry-After
-  });
-
-  it('does not retry client errors or timeouts', async () => {
-    const bad = jest.fn().mockRejectedValue(new HttpError(400, null));
-    await expect(withRetry(bad, { sleep })).rejects.toThrow('HTTP 400');
-    expect(bad).toHaveBeenCalledTimes(1);
-    const slow = jest.fn().mockRejectedValue(new Error('timed out'));
-    await expect(withRetry(slow, { sleep })).rejects.toThrow('timed out');
-    expect(slow).toHaveBeenCalledTimes(1);
-  });
-
+describe('the web proxy', () => {
   it('maps hosts without browser access to same-origin proxy paths', () => {
-    expect(webUrl('https://rest.isric.org/soilgrids/v2.0/properties/query?lat=1')).toBe('/soilgrids/soilgrids/v2.0/properties/query?lat=1');
     expect(webUrl('https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/x.tif')).toBe('/worldcover/v200/x.tif');
     expect(webUrl('https://power.larc.nasa.gov/api')).toBe('https://power.larc.nasa.gov/api');
   });
@@ -831,23 +758,6 @@ describe('land zones', () => {
   });
 });
 
-// ------------------------------------------------------------------ HWSD (bundled)
-
-describe('HWSD v2 soil for Cambodia', () => {
-  // Expected values were read from FAO's HWSD2.mdb and HWSD2.bil with scripts/build-hwsd.py.
-  it('returns the dominant topsoil of the mapping unit at a point', () => {
-    const s = readHwsd({ latitude: 12.5, longitude: 104.5 })!;
-    expect(s).toMatchObject({ soil: 'Acrisols', sharePct: 30, texture: 'Loam', drainage: 'P', ph: 4.8, clayPct: 23, cec: 8 });
-    expect(readHwsd({ latitude: 13.2, longitude: 103.2 })).toMatchObject({ soil: 'Gleysols', ph: 5.9 });
-  });
-
-  it('has no soil for towns and nothing outside the bundled area', () => {
-    expect(readHwsd({ latitude: 11.55, longitude: 104.92 })).toBeNull(); // central Phnom Penh: Technosols, no data
-    expect(hwsdCovers({ latitude: 13.75, longitude: 100.5 })).toBe(false); // Bangkok
-    expect(readHwsd({ latitude: 13.75, longitude: 100.5 })).toBeNull();
-  });
-});
-
 // ------------------------------------------------------------------ orchestration
 
 describe('analyzeLocation', () => {
@@ -866,9 +776,8 @@ describe('analyzeLocation', () => {
     const s = await analyzeLocation({ latitude: 11.5, longitude: 104.9 }, null, { fetchJson, fetchRange, now, onSection: (k) => seen.push(k) });
     expect(s.climate.status).toBe('ok');
     expect(s.rainHistory).toMatchObject({ status: 'error', reason: 'HTTP 503' });
-    // Soil is not predicted any more: only the farmer's own test is used.
-    expect(s.soil).toBeUndefined();
-    expect(s.hwsd).toBeUndefined();
+    // Soil is not predicted: only the farmer's own test is used.
+    expect('soil' in s).toBe(false);
     expect(s.terrain).toMatchObject({ status: 'error', reason: 'offline' });
     expect(s.landCover).toMatchObject({ status: 'error', reason: 'offline' });
     expect(s.createdAt).toBe('2026-10-18T00:00:00.000Z');

@@ -1,12 +1,9 @@
 /** Strings for land zones, the second soil source, local crops, farm economics and plant scanning. */
 export const farmEn = {
-  'env.step.hwsd': 'Second soil estimate (HWSD v2, offline)',
   'env.step.production': 'Crops grown nearby (FAO GAEZ)',
   'env.step.zones': 'Zones across the land',
   'env.tab.zones': 'Zones',
   'env.tab.farming': 'Farming',
-  'src.hwsd.limits':
-    'A soil map, not a measurement. Each map unit holds several soils and only the main one is shown. In Cambodia the units are large (often tens of kilometres), so your field may have a different soil.',
   'src.gaez.limits':
     'National statistics spread over cropland by a model, so the crops for one 10 km cell are estimates. Values use fixed FAO international prices, not local market prices, and no costs are subtracted.',
   'env.loadingSection': 'Still downloading…',
@@ -53,7 +50,8 @@ export const farmEn = {
   'photo.alt': 'Photo of {crop}',
   'photo.zoomIn': 'Zoom in',
   'photo.zoomOut': 'Zoom out',
-  'photo.credit': 'Photo from Wikipedia ({article}) · tap for the author and licence on Wikimedia Commons',
+  'photo.by': 'Photo: {artist} · {licence}',
+  'photo.credit': 'From Wikimedia Commons, via Wikipedia ({article}) · tap to see the file, author and licence',
   'zones.title': 'Land zones',
   'zones.introParcel': 'Your parcel is split into {rows} × {cols} zones of about {w} × {h} m. Each zone is judged on its own land cover and slope.',
   'zones.introSquare':
@@ -90,28 +88,6 @@ export const farmEn = {
   'zones.advice.built': 'Buildings or roads. Not for crops.',
   'zones.advice.no-data': 'No land-cover data here.',
 
-  'soil2.title': 'Soil map (FAO HWSD v2)',
-  'soil2.main': 'Main soil of this map unit: {soil} ({pct}% of the unit)',
-  'soil2.caption': 'Topsoil 0–20 cm, from FAO’s soil map. Not a test of your field.',
-  'soil2.drainage': 'Drainage',
-  'soil2.oc': 'Organic carbon',
-  'soil2.cec': 'Nutrient holding (CEC)',
-  'soil2.bsat': 'Base saturation',
-  'soil2.n': 'Total nitrogen',
-  'soil2.clay': 'Clay',
-  'soil2.sand': 'Sand',
-  'soil2.silt': 'Silt',
-  'soil2.compareTitle': 'Two soil sources',
-  'soil2.compare': 'Soil pH: SoilGrids {a}, FAO soil map {b}.',
-  'soil2.agree': 'They agree closely, so the figure is fairly reliable for the area.',
-  'soil2.differ': 'They differ by {d}. A simple soil test would settle it before you buy lime or fertiliser.',
-  'drain.E': 'Excessively drained',
-  'drain.SE': 'Somewhat excessively drained',
-  'drain.W': 'Well drained',
-  'drain.MW': 'Moderately well drained',
-  'drain.I': 'Imperfectly drained',
-  'drain.P': 'Poorly drained',
-  'drain.VP': 'Very poorly drained',
 
   'money.title': 'Currency',
   'money.rate': 'Converted from US$ at the exchange rate of {date}.',

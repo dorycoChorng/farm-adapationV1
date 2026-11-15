@@ -59,25 +59,11 @@ export const fixEn = {
   'fix.p.low-organic.steps':
     'Add compost or manure, about 5–10 tonnes per hectare each year.\nLeave crop residues and rice straw on the field instead of burning them.\nGrow a green manure such as mung bean or cowpea and dig it in before it flowers.\nRice-husk biochar mixed with manure also helps.',
   'fix.p.sandy.title': 'Sandy soil',
-  'fix.p.sandy.why': 'About {v}% sand. Water and fertiliser drain through quickly.',
   'fix.p.sandy.steps':
     'Mulch with straw or leaves to keep moisture in.\nAdd compost or manure every season.\nGive fertiliser in small doses more often, not all at once.\nWater little and often; drip lines save the most water.',
   'fix.p.heavy-clay.title': 'Heavy clay',
-  'fix.p.heavy-clay.why': 'About {v}% clay. It holds water well but turns sticky when wet and hard when dry.',
   'fix.p.heavy-clay.steps':
     'It suits paddy rice as it is.\nFor upland crops, plant on raised beds or ridges.\nAdd organic matter, and do not plough when the soil is wet.',
-  'fix.p.poor-drainage.title': 'Poorly drained',
-  'fix.p.poor-drainage.why': 'The FAO soil map shows water stays in this soil for long periods.',
-  'fix.p.poor-drainage.steps':
-    'Dig drainage ditches around and through the field.\nPlant upland crops on raised beds 20–30 cm high.\nUse the wettest part for rice or a fish pond.',
-  'fix.p.low-nutrients.title': 'Holds few nutrients',
-  'fix.p.low-nutrients.why': 'Nutrient-holding capacity (CEC) {v} cmol/kg. Fertiliser washes out quickly.',
-  'fix.p.low-nutrients.steps':
-    'Split fertiliser into 2–3 smaller doses through the season.\nAdd organic matter; in sandy and old weathered soils it is what holds the nutrients.',
-  'fix.p.low-nitrogen.title': 'Low nitrogen',
-  'fix.p.low-nitrogen.why': 'Total nitrogen {v} g/kg. Without extra nitrogen, crops stay pale and small.',
-  'fix.p.low-nitrogen.steps':
-    'Rotate with legumes (mung bean, cowpea, groundnut, soybean) that add nitrogen to the soil.\nAdd manure or compost.\nGive urea in 2–3 split doses, not all at planting.',
   'fix.p.steep.title': 'Steep slope',
   'fix.p.steep.why': 'Slope {v}°. Rain washes the topsoil away.',
   'fix.p.steep.steps':

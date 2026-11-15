@@ -1,6 +1,6 @@
 import type { LatLng } from '../geo/types';
 
-export type SourceId = 'nasa-power' | 'soilgrids' | 'aws-terrain' | 'esa-worldcover' | 'hwsd' | 'gaez';
+export type SourceId = 'nasa-power' | 'aws-terrain' | 'esa-worldcover' | 'gaez';
 export type Confidence = 'high' | 'medium' | 'low';
 
 /** One section of an analysis either holds data, or says why it has none. */
@@ -27,21 +27,6 @@ export interface RainHistory {
   years: { year: number; totalMm: number }[];
 }
 
-export interface SoilProperty {
-  key: 'phh2o' | 'soc' | 'clay' | 'sand' | 'silt' | 'nitrogen' | 'cec';
-  /** Depth-weighted 0–30 cm values in display units. */
-  mean: number | null;
-  low: number | null;
-  high: number | null;
-  unit: string;
-}
-
-export interface SoilData {
-  depth: string;
-  properties: SoilProperty[];
-  textureClass: string | null;
-}
-
 export interface TerrainData {
   elevationM: number;
   slopeDeg: number | null;
@@ -56,26 +41,6 @@ export interface LandCoverData {
   /** Share of sampled pixels per class inside the parcel; a single entry for a point. */
   fractions: { code: number; fraction: number }[];
   samples: number;
-}
-
-/** HWSD v2 dominant soil of the mapping unit at a point (topsoil, 0–20 cm). */
-export interface HwsdData {
-  unitId: number;
-  /** WRB soil group, e.g. "Acrisols". */
-  soil: string | null;
-  /** Share of the mapping unit this soil covers. */
-  sharePct: number | null;
-  texture: string | null;
-  drainage: string | null;
-  ph: number | null;
-  organicCarbonPct: number | null;
-  clayPct: number | null;
-  sandPct: number | null;
-  siltPct: number | null;
-  /** Cation exchange capacity, cmol(+)/kg. */
-  cec: number | null;
-  baseSaturationPct: number | null;
-  nitrogenGKg: number | null;
 }
 
 /** Crops grown in the ~10 km GAEZ cell around a place (FAOSTAT 2019–2021, spread over cropland). */
@@ -143,15 +108,8 @@ export interface EnvSummary {
   createdAt: string;
   climate: Section<ClimateData>;
   rainHistory: Section<RainHistory>;
-  /**
-   * Predicted soil (SoilGrids). No longer fetched or shown: the app only uses the farmer's
-   * own soil test. Kept so analyses saved earlier still load.
-   */
-  soil?: Section<SoilData>;
   terrain: Section<TerrainData>;
   landCover: Section<LandCoverData>;
-  /** FAO soil map. No longer fetched or shown (see `soil`); kept so older analyses still load. */
-  hwsd?: Section<HwsdData>;
   /** Added after the first release; absent in analyses saved before then. */
   production?: Section<LocalProductionData>;
   zones?: Section<ZoneData>;
@@ -166,7 +124,7 @@ export interface SourceInfo {
   url: string;
   licence: string;
   /** What the numbers are: modelled, reanalysis, satellite classification, etc. */
-  kind: 'reanalysis-model' | 'statistical-model' | 'elevation-model' | 'satellite-classification' | 'soil-map' | 'statistics';
+  kind: 'reanalysis-model' | 'elevation-model' | 'satellite-classification' | 'statistics';
   resolution: string;
   period: string;
   confidence: Confidence;

@@ -25,7 +25,6 @@ export const envEn = {
   'env.fetching': 'Fetching open data',
   'env.step.climate': 'Climate averages (NASA POWER)',
   'env.step.rainHistory': 'Rainfall by year (NASA POWER)',
-  'env.step.soil': 'Soil estimates (SoilGrids)',
   'env.step.terrain': 'Elevation and slope',
   'env.step.landCover': 'Land cover (ESA WorldCover)',
   'env.introTitle': 'What this analysis does',
@@ -54,7 +53,6 @@ export const envEn = {
   'env.conf.medium': 'medium',
   'env.conf.low': 'low',
   'env.kind.reanalysis-model': 'Weather model (reanalysis)',
-  'env.kind.statistical-model': 'Statistical model',
   'env.kind.elevation-model': 'Elevation model',
   'env.kind.satellite-classification': 'Satellite classification',
   'env.monthsLong': 'January,February,March,April,May,June,July,August,September,October,November,December',
@@ -71,12 +69,6 @@ export const envEn = {
   'env.tempMax': 'Daily high',
   'env.tempMin': 'Daily low',
   'env.solarCaption': 'Average sunlight energy reaching the ground (all-sky).',
-  'env.soil': 'Topsoil',
-  'env.soilModelled':
-    'Soil values are predicted by a global model from soil samples and satellite data. They are not a test of your field; a laboratory soil test is needed for fertiliser decisions.',
-  'env.phCaption': 'Predicted pH in water, {depth}. Box shows the model’s likely range.',
-  'env.texture': 'Texture (USDA)',
-  'env.soilRangeNote': 'Brackets show the model’s 90% prediction range (5th–95th percentile).',
   'env.terrain': 'Terrain',
   'env.slope': 'Slope',
   'env.cell': 'Grid cell',
@@ -86,8 +78,6 @@ export const envEn = {
 
   'src.power.limits':
     'Values are averages over a grid cell about 55 km wide, from a global weather model calibrated with satellites and stations. Local rainfall can differ a lot, especially near hills and coasts.',
-  'src.soilgrids.limits':
-    'Predicted at 250 m from soil profiles and environmental data. Accuracy is often low for a single field, and recent management (liming, fertiliser, flooding) is not reflected.',
   'src.terrain.limits':
     'Satellite radar elevation from 2000; can include trees and buildings, and small terraces or bunds are not visible. Slope is calculated over about 60 m.',
   'src.worldcover.limits':
@@ -105,27 +95,7 @@ export const envEn = {
   'lc.mangrove': 'Mangroves',
   'lc.moss': 'Moss and lichen',
 
-  'texture.sand': 'Sand',
-  'texture.loamy-sand': 'Loamy sand',
-  'texture.sandy-loam': 'Sandy loam',
-  'texture.loam': 'Loam',
-  'texture.silt-loam': 'Silt loam',
-  'texture.silt': 'Silt',
-  'texture.sandy-clay-loam': 'Sandy clay loam',
-  'texture.clay-loam': 'Clay loam',
-  'texture.silty-clay-loam': 'Silty clay loam',
-  'texture.sandy-clay': 'Sandy clay',
-  'texture.silty-clay': 'Silty clay',
-  'texture.clay': 'Clay',
-  'texture.unknown': 'Unknown',
 
-  'soil.phh2o': 'pH',
-  'soil.soc': 'Organic carbon',
-  'soil.clay': 'Clay',
-  'soil.sand': 'Sand',
-  'soil.silt': 'Silt',
-  'soil.nitrogen': 'Total nitrogen',
-  'soil.cec': 'Cation exchange capacity',
 
   'crop.rice': 'Rice',
   'crop.rice.note': 'Lowland rice is usually grown in bunded, flooded paddies, so flat land and water supply matter more than rainfall alone.',

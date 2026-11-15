@@ -1,6 +1,6 @@
 import { coastDistanceKm, monthlyEt0, saltRisk } from '../salinity';
 import { soilFixPlan } from '../soilFixes';
-import type { EnvSummary, SoilProperty, SoilTest } from '../types';
+import type { EnvSummary, SoilTest } from '../types';
 
 const at = '2026-01-01T00:00:00.000Z';
 
@@ -9,13 +9,11 @@ function summary(over: {
   lon: number;
   elevation?: number;
   slope?: number;
-  soil?: Partial<Record<SoilProperty['key'], number>>;
   mangrove?: number;
   rain?: number[];
   test?: Partial<SoilTest>;
 }): EnvSummary {
   const rain = over.rain ?? [10, 15, 40, 90, 180, 200, 210, 220, 260, 230, 120, 40];
-  const props = Object.entries(over.soil ?? {}).map(([key, mean]) => ({ key, mean, low: null, high: null, unit: '' })) as SoilProperty[];
   const fractions = over.mangrove ? [{ code: 40, fraction: 1 - over.mangrove }, { code: 95, fraction: over.mangrove }] : [{ code: 40, fraction: 1 }];
   return {
     version: 1,
@@ -39,7 +37,6 @@ function summary(over: {
       },
     },
     rainHistory: { status: 'no-data', source: 'nasa-power', fetchedAt: at, reason: 'test' },
-    soil: props.length ? { status: 'ok', source: 'soilgrids', fetchedAt: at, data: { depth: '0–30 cm', properties: props, textureClass: null } } : { status: 'no-data', source: 'soilgrids', fetchedAt: at, reason: 'test' },
     terrain:
       over.elevation === undefined
         ? { status: 'no-data', source: 'aws-terrain', fetchedAt: at, reason: 'test' }
@@ -85,9 +82,8 @@ describe('soil fixes', () => {
     expect(plan.problems.filter((p) => !p.id.startsWith('salt'))).toEqual([]);
   });
 
-  it('gives no soil advice without a soil test, even if old soil maps are saved', () => {
-    // Analyses saved before soil maps were dropped still hold them; they are ignored.
-    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 15, soil: { phh2o: 4.6, soc: 6, sand: 75, clay: 60, cec: 5, nitrogen: 0.5 } }));
+  it('gives no soil advice without a soil test', () => {
+    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 15 }));
     expect(plan.problems.filter((p) => !p.id.startsWith('salt'))).toEqual([]);
   });
 

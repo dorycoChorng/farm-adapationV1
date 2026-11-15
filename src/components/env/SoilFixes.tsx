@@ -78,7 +78,7 @@ function Problem({ problem }: { problem: SoilProblem }) {
       </View>
       {problem.measured ? <Text style={st.measured}>{t('fix.measured')}</Text> : null}
       <Text style={type.small}>
-        {problem.measured && problem.value === null && (problem.id === 'sandy' || problem.id === 'heavy-clay')
+        {problem.id === 'sandy' || problem.id === 'heavy-clay'
           ? t(`fix.p.${problem.id}.whyTest` as TranslationKey)
           : t(`fix.p.${problem.id}.why` as TranslationKey, { v: fmtValue(problem) })}
       </Text>

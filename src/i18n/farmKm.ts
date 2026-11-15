@@ -2,13 +2,10 @@ import type { farmEn } from './farmEn';
 
 /** Khmer strings for land zones, the second soil source, local crops, farm economics and plant scanning. Drafted; needs review by a native speaker. */
 export const farmKm: Record<keyof typeof farmEn, string> = {
-  'env.step.hwsd': 'ការប៉ាន់ស្មានដីទីពីរ (HWSD v2 គ្មានអ៊ីនធឺណិត)',
   'env.step.production': 'ដំណាំដែលដាំនៅជិតនេះ (FAO GAEZ)',
   'env.step.zones': 'តំបន់នៅលើដី',
   'env.tab.zones': 'តំបន់',
   'env.tab.farming': 'កសិកម្ម',
-  'src.hwsd.limits':
-    'នេះជាផែនទីដី មិនមែនការវាស់វែងទេ។ ឯកតាផែនទីនីមួយៗមានដីច្រើនប្រភេទ ហើយបង្ហាញតែប្រភេទចម្បង។ នៅកម្ពុជា ឯកតាទាំងនេះធំ (ច្រើនតែរាប់សិបគីឡូម៉ែត្រ) ដូច្នេះដីស្រែរបស់អ្នកអាចខុសពីនេះ។',
   'src.gaez.limits':
     'ស្ថិតិជាតិត្រូវបានចែកលើដីដាំដុះដោយម៉ូដែល ដូច្នេះដំណាំក្នុងក្រឡា 10 គីឡូម៉ែត្រមួយ ជាការប៉ាន់ស្មាន។ តម្លៃប្រើតម្លៃអន្តរជាតិថេររបស់ FAO មិនមែនតម្លៃទីផ្សារក្នុងស្រុកទេ ហើយមិនបានដកចំណាយទេ។',
   'env.loadingSection': 'កំពុងទាញយក…',
@@ -55,7 +52,8 @@ export const farmKm: Record<keyof typeof farmEn, string> = {
   'photo.alt': 'រូបថត {crop}',
   'photo.zoomIn': 'ពង្រីក',
   'photo.zoomOut': 'បង្រួម',
-  'photo.credit': 'រូបថតពី Wikipedia ({article}) · ចុចដើម្បីមើលអ្នកថត និងអាជ្ញាប័ណ្ណនៅ Wikimedia Commons',
+  'photo.by': 'រូបថត៖ {artist} · {licence}',
+  'photo.credit': 'ពី Wikimedia Commons តាមរយៈ Wikipedia ({article}) · ចុចដើម្បីមើលឯកសារ អ្នកថត និងអាជ្ញាប័ណ្ណ',
   'zones.title': 'តំបន់ដី',
   'zones.introParcel': 'ដីរបស់អ្នកត្រូវបានចែកជា {rows} × {cols} តំបន់ ទំហំប្រហែល {w} × {h} ម៉ែត្រ។ តំបន់នីមួយៗត្រូវបានវាយតម្លៃតាមគម្របដី និងជម្រាលរបស់វា។',
   'zones.introSquare':
@@ -91,28 +89,6 @@ export const farmKm: Record<keyof typeof farmEn, string> = {
   'zones.advice.built': 'អគារ ឬផ្លូវ។ មិនសម្រាប់ដំណាំទេ។',
   'zones.advice.no-data': 'គ្មានទិន្នន័យគម្របដីនៅទីនេះ។',
 
-  'soil2.title': 'ផែនទីដី (FAO HWSD v2)',
-  'soil2.main': 'ដីចម្បងនៃឯកតាផែនទីនេះ៖ {soil} ({pct}% នៃឯកតា)',
-  'soil2.caption': 'ដីស្រទាប់លើ 0–20 សង់ទីម៉ែត្រ ពីផែនទីដីរបស់ FAO។ មិនមែនការធ្វើតេស្តដីស្រែរបស់អ្នកទេ។',
-  'soil2.drainage': 'ការបង្ហូរទឹក',
-  'soil2.oc': 'កាបូនសរីរាង្គ',
-  'soil2.cec': 'សមត្ថភាពរក្សាជីជាតិ (CEC)',
-  'soil2.bsat': 'កម្រិតឆ្អែតបាស',
-  'soil2.n': 'អាសូតសរុប',
-  'soil2.clay': 'ដីឥដ្ឋ',
-  'soil2.sand': 'ខ្សាច់',
-  'soil2.silt': 'ល្បាប់',
-  'soil2.compareTitle': 'ប្រភពដីពីរ',
-  'soil2.compare': 'pH ដី៖ SoilGrids {a}, ផែនទីដី FAO {b}។',
-  'soil2.agree': 'ទាំងពីរស្របគ្នាជិតស្និទ្ធ ដូច្នេះតួលេខនេះគួរឱ្យទុកចិត្តសម្រាប់តំបន់នេះ។',
-  'soil2.differ': 'ទាំងពីរខុសគ្នា {d}។ ការធ្វើតេស្តដីសាមញ្ញមួយនឹងបញ្ជាក់ មុនពេលអ្នកទិញកំបោរ ឬជី។',
-  'drain.E': 'បង្ហូរទឹកលឿនពេក',
-  'drain.SE': 'បង្ហូរទឹកលឿនបន្តិច',
-  'drain.W': 'បង្ហូរទឹកល្អ',
-  'drain.MW': 'បង្ហូរទឹកល្អមធ្យម',
-  'drain.I': 'បង្ហូរទឹកមិនសូវល្អ',
-  'drain.P': 'បង្ហូរទឹកខ្សោយ',
-  'drain.VP': 'បង្ហូរទឹកខ្សោយខ្លាំង',
 
   'money.title': 'រូបិយប័ណ្ណ',
   'money.rate': 'ប្តូរពីដុល្លារអាមេរិក តាមអត្រាប្តូរប្រាក់ថ្ងៃទី {date}។',

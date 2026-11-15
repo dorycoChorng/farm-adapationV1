@@ -27,7 +27,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'env.fetching': 'កំពុងទាញយកទិន្នន័យបើកចំហ',
   'env.step.climate': 'មធ្យមភាគអាកាសធាតុ (NASA POWER)',
   'env.step.rainHistory': 'បរិមាណទឹកភ្លៀងតាមឆ្នាំ (NASA POWER)',
-  'env.step.soil': 'ការប៉ាន់ស្មានដី (SoilGrids)',
   'env.step.terrain': 'កម្ពស់ និងជម្រាល',
   'env.step.landCover': 'គម្របដី (ESA WorldCover)',
   'env.introTitle': 'អ្វីដែលការវិភាគនេះធ្វើ',
@@ -56,7 +55,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'env.conf.medium': 'មធ្យម',
   'env.conf.low': 'ទាប',
   'env.kind.reanalysis-model': 'គំរូអាកាសធាតុ (វិភាគឡើងវិញ)',
-  'env.kind.statistical-model': 'គំរូស្ថិតិ',
   'env.kind.elevation-model': 'គំរូកម្ពស់',
   'env.kind.satellite-classification': 'ការចាត់ថ្នាក់ពីផ្កាយរណប',
   'env.monthsLong': 'មករា,កុម្ភៈ,មីនា,មេសា,ឧសភា,មិថុនា,កក្កដា,សីហា,កញ្ញា,តុលា,វិច្ឆិកា,ធ្នូ',
@@ -73,12 +71,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'env.tempMax': 'ខ្ពស់ប្រចាំថ្ងៃ',
   'env.tempMin': 'ទាបប្រចាំថ្ងៃ',
   'env.solarCaption': 'ថាមពលពន្លឺថ្ងៃជាមធ្យមដែលធ្លាក់មកដល់ដី។',
-  'env.soil': 'ដីស្រទាប់លើ',
-  'env.soilModelled':
-    'តម្លៃដីត្រូវបានព្យាករដោយគំរូសកលពីគំរូដី និងទិន្នន័យផ្កាយរណប។ វាមិនមែនជាការធ្វើតេស្តដីស្រែរបស់អ្នកទេ។ ត្រូវការការធ្វើតេស្តដីក្នុងមន្ទីរពិសោធន៍សម្រាប់ការសម្រេចចិត្តលើជី។',
-  'env.phCaption': 'pH ក្នុងទឹកដែលបានព្យាករ {depth}។ ប្រអប់បង្ហាញជួរដែលអាចកើតមាន។',
-  'env.texture': 'វាយនភាព (USDA)',
-  'env.soilRangeNote': 'វង់ក្រចកបង្ហាញជួរព្យាករ 90% របស់គំរូ។',
   'env.terrain': 'សណ្ឋានដី',
   'env.slope': 'ជម្រាល',
   'env.cell': 'ក្រឡាក្រឡាចត្រង្គ',
@@ -88,8 +80,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
 
   'src.power.limits':
     'តម្លៃជាមធ្យមលើក្រឡាទំហំប្រហែល 55 គីឡូម៉ែត្រ ពីគំរូអាកាសធាតុសកលដែលកែតម្រូវជាមួយផ្កាយរណប និងស្ថានីយ។ ទឹកភ្លៀងក្នុងតំបន់អាចខុសគ្នាច្រើន ជាពិសេសក្បែរភ្នំ និងឆ្នេរ។',
-  'src.soilgrids.limits':
-    'ព្យាករនៅ 250 ម៉ែត្រ ពីទម្រង់ដី និងទិន្នន័យបរិស្ថាន។ ភាពត្រឹមត្រូវច្រើនតែទាបសម្រាប់ចម្ការតែមួយ ហើយការគ្រប់គ្រងថ្មីៗ (កំបោរ ជី ទឹកជំនន់) មិនត្រូវបានឆ្លុះបញ្ចាំងទេ។',
   'src.terrain.limits':
     'កម្ពស់ពីរ៉ាដាផ្កាយរណបឆ្នាំ 2000 អាចរាប់បញ្ចូលដើមឈើ និងអគារ ហើយភ្លឺស្រែតូចៗមើលមិនឃើញ។ ជម្រាលត្រូវបានគណនាលើចម្ងាយប្រហែល 60 ម៉ែត្រ។',
   'src.worldcover.limits':
@@ -107,27 +97,7 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'lc.mangrove': 'ព្រៃកោងកាង',
   'lc.moss': 'ស្លែ',
 
-  'texture.sand': 'ខ្សាច់',
-  'texture.loamy-sand': 'ខ្សាច់ល្បាយល្បប់',
-  'texture.sandy-loam': 'ល្បប់ខ្សាច់',
-  'texture.loam': 'ល្បប់',
-  'texture.silt-loam': 'ល្បប់ល្បាប់',
-  'texture.silt': 'ល្បាប់',
-  'texture.sandy-clay-loam': 'ល្បប់ឥដ្ឋខ្សាច់',
-  'texture.clay-loam': 'ល្បប់ឥដ្ឋ',
-  'texture.silty-clay-loam': 'ល្បប់ឥដ្ឋល្បាប់',
-  'texture.sandy-clay': 'ឥដ្ឋខ្សាច់',
-  'texture.silty-clay': 'ឥដ្ឋល្បាប់',
-  'texture.clay': 'ដីឥដ្ឋ',
-  'texture.unknown': 'មិនស្គាល់',
 
-  'soil.phh2o': 'pH',
-  'soil.soc': 'កាបូនសរីរាង្គ',
-  'soil.clay': 'ឥដ្ឋ',
-  'soil.sand': 'ខ្សាច់',
-  'soil.silt': 'ល្បាប់',
-  'soil.nitrogen': 'អាសូតសរុប',
-  'soil.cec': 'សមត្ថភាពផ្លាស់ប្តូរកាចុង',
 
   'crop.rice': 'ស្រូវ',
   'crop.rice.note': 'ស្រូវវាលទំនាបជាធម្មតាដាំក្នុងស្រែមានភ្លឺ និងទឹកលិច ដូច្នេះដីរាបស្មើ និងប្រភពទឹកសំខាន់ជាងទឹកភ្លៀងតែមួយមុខ។',
