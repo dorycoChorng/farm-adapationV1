@@ -12,6 +12,16 @@ export const farmEn = {
   'env.loadingSection': 'Still downloading…',
   'env.sectionOld': 'This analysis was saved before this part was added. Tap Refresh to add it.',
 
+  'water.show': 'Show water flow',
+  'water.hide': 'Hide water flow',
+  'water.loading': 'Working out where rain water runs…',
+  'water.error': 'Water flow could not be worked out (elevation data did not load).',
+  'water.legendRun': 'Water running through: a little → a lot',
+  'water.legendPond': 'Water pools here',
+  'water.summary': 'Rain water runs through about {run}% of the land and pools on about {pond}%.',
+  'water.source.nasadem': 'From NASA NASADEM elevation (30 m) via Microsoft Planetary Computer.',
+  'water.source.aws': 'From SRTM elevation (AWS Terrain Tiles); Planetary Computer could not be reached.',
+  'water.note': 'Modelled from the shape of the ground only; canals, dikes and paddy bunds are not included.',
   'zones.title': 'Land zones',
   'zones.introParcel': 'Your parcel is split into {rows} × {cols} zones of about {w} × {h} m. Each zone is judged on its own land cover and slope.',
   'zones.introSquare':

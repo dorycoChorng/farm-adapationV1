@@ -18,6 +18,14 @@
       "destination": "https://storage.googleapis.com/fao-gismgr-gaez-v5-data/:path*"
     },
     {
+      "source": "/nasadem/:path*",
+      "destination": "https://nasademeuwest.blob.core.windows.net/nasadem-cog/:path*"
+    },
+    {
+      "source": "/pc-sas/:path*",
+      "destination": "https://planetarycomputer.microsoft.com/api/sas/:path*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
@@ -60,6 +68,24 @@
         {
           "key": "CDN-Cache-Control",
           "value": "max-age=2592000"
+        }
+      ]
+    },
+    {
+      "source": "/nasadem/:path*",
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "source": "/pc-sas/:path*",
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "0"
         }
       ]
     }

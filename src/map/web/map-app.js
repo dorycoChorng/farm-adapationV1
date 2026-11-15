@@ -93,6 +93,7 @@
       },
       accuracy: { type: 'geojson', data: fc([]) },
       zones: { type: 'geojson', data: fc([]) },
+      water: { type: 'geojson', data: fc([]), attribution: 'NASADEM (NASA/JPL) via Microsoft Planetary Computer' },
       ring: { type: 'geojson', data: fc([]) },
       landcover: {
         type: 'raster',
@@ -153,6 +154,36 @@
         paint: {
           'line-color': ['case', ['get', 'selected'], '#ffffff', 'rgba(255,255,255,0.75)'],
           'line-width': ['case', ['get', 'selected'], 3.5, 1.2],
+        },
+      },
+      // Water flow over the land: blue cells get darker as more land drains through them,
+      // purple marks spots where water pools, and lines show which way it runs.
+      {
+        id: 'water-fill',
+        type: 'fill',
+        source: 'water',
+        filter: ['==', ['geometry-type'], 'Polygon'],
+        paint: {
+          'fill-color': [
+            'case',
+            ['get', 'pond'],
+            '#7e57c2',
+            ['match', ['get', 'level'], 1, '#b3e0ff', 2, '#5fb4f2', 3, '#1e7fd8', '#0b4aa8'],
+          ],
+          'fill-opacity': ['case', ['get', 'pond'], 0.6, ['match', ['get', 'level'], 1, 0.35, 2, 0.5, 3, 0.62, 0.72]],
+          'fill-antialias': false,
+        },
+      },
+      {
+        id: 'water-line',
+        type: 'line',
+        source: 'water',
+        filter: ['==', ['geometry-type'], 'LineString'],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#e3f4ff',
+          'line-width': ['match', ['get', 'level'], 1, 0.8, 2, 1.4, 3, 2.2, 3],
+          'line-opacity': 0.9,
         },
       },
       {
@@ -543,6 +574,29 @@
     window.__zones = features.length;
   }
 
+  // Water-flow shading from the app; null clears it.
+  function setWaterFlow(flow) {
+    var features = [];
+    if (flow) {
+      flow.cells.forEach(function (c) {
+        features.push({
+          type: 'Feature',
+          properties: { level: c.level, pond: !!c.pond },
+          geometry: { type: 'Polygon', coordinates: [c.ring.concat([c.ring[0]])] },
+        });
+      });
+      flow.lines.forEach(function (l) {
+        features.push({
+          type: 'Feature',
+          properties: { level: l.level },
+          geometry: { type: 'LineString', coordinates: [l.from, l.to] },
+        });
+      });
+    }
+    map.getSource('water').setData(fc(features));
+    window.__waterFlow = features.length;
+  }
+
   function setSelected(point) {
     if (selectedMarker) selectedMarker.remove();
     selectedMarker = null;
@@ -773,6 +827,9 @@
           break;
         case 'setZones':
           setZones(msg.zones, msg.selected == null ? null : msg.selected);
+          break;
+        case 'setWaterFlow':
+          setWaterFlow(msg.flow);
           break;
         case 'setLabels':
           setLabels(msg.labels);

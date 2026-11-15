@@ -14,6 +14,16 @@ export const farmKm: Record<keyof typeof farmEn, string> = {
   'env.loadingSection': 'កំពុងទាញយក…',
   'env.sectionOld': 'ការវិភាគនេះត្រូវបានរក្សាទុកមុនពេលបន្ថែមផ្នែកនេះ។ ចុច ធ្វើបច្ចុប្បន្នភាព ដើម្បីបន្ថែម។',
 
+  'water.show': 'បង្ហាញលំហូរទឹក',
+  'water.hide': 'លាក់លំហូរទឹក',
+  'water.loading': 'កំពុងគណនាកន្លែងដែលទឹកភ្លៀងហូរ…',
+  'water.error': 'មិនអាចគណនាលំហូរទឹកបានទេ (ទិន្នន័យកម្ពស់មិនបានផ្ទុក)។',
+  'water.legendRun': 'ទឹកហូរកាត់៖ តិច → ច្រើន',
+  'water.legendPond': 'ទឹកដក់នៅទីនេះ',
+  'water.summary': 'ទឹកភ្លៀងហូរកាត់ប្រហែល {run}% នៃដី ហើយដក់នៅលើប្រហែល {pond}%។',
+  'water.source.nasadem': 'ពីទិន្នន័យកម្ពស់ NASADEM របស់ NASA (30 ម៉ែត្រ) តាមរយៈ Microsoft Planetary Computer។',
+  'water.source.aws': 'ពីទិន្នន័យកម្ពស់ SRTM (AWS Terrain Tiles) ព្រោះមិនអាចភ្ជាប់ Planetary Computer បាន។',
+  'water.note': 'គណនាតែពីរាងដីប៉ុណ្ណោះ មិនរាប់បញ្ចូលប្រឡាយ ទំនប់ ឬភ្លឺស្រែទេ។',
   'zones.title': 'តំបន់ដី',
   'zones.introParcel': 'ដីរបស់អ្នកត្រូវបានចែកជា {rows} × {cols} តំបន់ ទំហំប្រហែល {w} × {h} ម៉ែត្រ។ តំបន់នីមួយៗត្រូវបានវាយតម្លៃតាមគម្របដី និងជម្រាលរបស់វា។',
   'zones.introSquare':

@@ -38,6 +38,14 @@ export type MapCommand =
   | { type: 'setLabels'; labels: { at: LngLat; text: string }[] }
   /** Land zones drawn over the imagery; `selected` is the id of the highlighted zone. */
   | { type: 'setZones'; zones: { id: number; ring: LngLat[]; color: string; label: string }[]; selected: number | null }
+  /** Water-flow shading inside the land (cells by how much water runs through, pooling spots, flow lines); null clears it. */
+  | {
+      type: 'setWaterFlow';
+      flow: {
+        cells: { ring: LngLat[]; level: number; pond: boolean }[];
+        lines: { from: LngLat; to: LngLat; level: number }[];
+      } | null;
+    }
   | { type: 'queryElevation'; requestId: number; point: LngLat }
   /** Answer to a tileRequest: run-length encoded class codes ([value, count, ...]), or null for an empty tile. */
   | { type: 'tileData'; requestId: number; runs: number[] | null; error?: boolean };

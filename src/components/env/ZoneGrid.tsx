@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { appFetchJson, appFetchRange } from '../../env/appFetch';
 import { LAND_COVER_CLASSES } from '../../env/sources';
+import { readWaterFlow, type WaterFlowMap } from '../../env/waterFlow';
 import type { LatLng } from '../../geo/types';
 import type { ZoneData, ZoneKind } from '../../env/types';
 import { FARMABLE_ZONES, zoneAt, zoneCells, zoneSummary } from '../../env/zones';
@@ -11,7 +13,7 @@ import { FarmMap } from '../map/FarmMap';
 import type { TranslationKey } from '../../i18n/en';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme/colors';
-import { tapFeedback } from '../ui';
+import { Ionicons, tapFeedback } from '../ui';
 
 export const ZONE_COLORS: Record<ZoneKind, string> = {
   cropland: '#3f9a4f',
@@ -46,6 +48,27 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
     }
   });
   const [w, s, e, n] = data.bbox;
+  const [showWater, setShowWater] = useState(false);
+  const [water, setWater] = useState<{ key: ZoneData; flow: WaterFlowMap | null; failed: boolean } | null>(null);
+  const waterReady = water?.key === data ? water : null;
+
+  // Water flow is worked out only when asked for, once per piece of land.
+  useEffect(() => {
+    if (!showWater || waterReady) return;
+    let live = true;
+    readWaterFlow(data.bbox, ring, appFetchJson, appFetchRange).then(
+      (flow) => live && setWater({ key: data, flow, failed: false }),
+      () => live && setWater({ key: data, flow: null, failed: true }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [showWater, waterReady, data, ring]);
+  useEffect(() => {
+    const flow = showWater && waterReady?.flow ? waterReady.flow : null;
+    mapRef.current?.send({ type: 'setWaterFlow', flow: flow ? { cells: flow.cells, lines: flow.lines } : null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showWater, waterReady]);
 
   useEffect(() => {
     mapRef.current?.send({ type: 'fitBounds', bbox: data.bbox, maxZoom: 18 });
@@ -82,6 +105,20 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
         />
       </View>
       <Text style={[type.small, { marginTop: 4 }]}>{tileError ? t('zones.noImagery') : t('zones.mapNote')}</Text>
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityState={{ checked: showWater }}
+        onPress={() => {
+          tapFeedback('select');
+          setShowWater((v) => !v);
+        }}
+        style={[st.waterToggle, showWater && st.waterToggleOn]}
+        testID="water-flow-toggle"
+      >
+        <Ionicons name="water" size={18} color={showWater ? colors.white : WATER_COLORS[3]} />
+        <Text style={[st.waterToggleText, showWater && { color: colors.white }]}>{showWater ? t('water.hide') : t('water.show')}</Text>
+      </Pressable>
+      {showWater ? <WaterLegend state={waterReady} /> : null}
       <ZoneLegend data={data} />
       {zone ? (
         <View style={[st.detail, { borderColor: ZONE_COLORS[zone.kind] }]} testID="zone-detail">
@@ -128,6 +165,36 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
   );
 }
 
+/** Same colours as the map page's water-flow layer, from a little run-off (1) to a stream (4). */
+const WATER_COLORS = ['', '#b3e0ff', '#5fb4f2', '#1e7fd8', '#0b4aa8'];
+const POND_COLOR = '#7e57c2';
+
+function WaterLegend({ state }: { state: { flow: WaterFlowMap | null; failed: boolean } | null }) {
+  const { t } = useI18n();
+  if (!state) return <Text style={[type.small, st.waterBox]}>{t('water.loading')}</Text>;
+  if (!state.flow) return <Text style={[type.small, st.waterBox]}>{t('water.error')}</Text>;
+  const { flow } = state;
+  return (
+    <View style={st.waterBox} testID="water-flow-legend">
+      <View style={st.legendItem}>
+        {WATER_COLORS.slice(1).map((c) => (
+          <View key={c} style={[st.swatch, { backgroundColor: c }]} />
+        ))}
+        <Text style={st.legendText}>{t('water.legendRun')}</Text>
+      </View>
+      <View style={[st.legendItem, { marginTop: 4 }]}>
+        <View style={[st.swatch, { backgroundColor: POND_COLOR }]} />
+        <Text style={st.legendText}>{t('water.legendPond')}</Text>
+      </View>
+      <Text style={[type.body, { marginTop: spacing.xs }]}>
+        {t('water.summary', { run: Math.round(flow.runShare * 100), pond: Math.round(flow.pondShare * 100) })}
+      </Text>
+      <Text style={type.small}>{t(flow.source === 'nasadem' ? 'water.source.nasadem' : 'water.source.aws')}</Text>
+      <Text style={type.small}>{t('water.note')}</Text>
+    </View>
+  );
+}
+
 /** What each colour is, how much of the land it covers, and how much can follow the crop advice. */
 export function ZoneLegend({ data }: { data: ZoneData }) {
   const { t } = useI18n();
@@ -167,6 +234,22 @@ const st = StyleSheet.create({
   detailTitle: { fontSize: 13.5, fontWeight: '700', color: colors.text },
   map: { borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#04121c' },
   chips: { gap: 6, paddingVertical: spacing.sm },
+  waterToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    minHeight: 44,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#1e7fd8',
+    backgroundColor: colors.surface,
+  },
+  waterToggleOn: { backgroundColor: '#1e7fd8' },
+  waterToggleText: { fontSize: 14, fontWeight: '700', color: '#1e7fd8' },
+  waterBox: { marginTop: spacing.sm, borderRadius: radius.md, backgroundColor: colors.surfaceAlt, padding: spacing.md, gap: 2 },
   chip: { minWidth: 40, minHeight: 40, borderRadius: 20, borderWidth: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   chipText: { fontSize: 13.5, fontWeight: '700', color: colors.text },
 });
