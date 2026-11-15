@@ -12,6 +12,10 @@ export interface MapInitConfig {
   baseLayers: Record<string, RasterProvider | null>;
   terrain: TerrainSource;
   elevationZoom: number;
+  /** Soil pH overlay tiles (ISRIC SoilGrids WMS). */
+  soil: RasterProvider;
+  /** Rainfall and sunlight overlays: colour stops for each, and the attribution. */
+  climate: { attribution: string; stops: Record<'rainfall' | 'sunlight', [number, string][]> };
   /** Land-cover overlay: zoom range, attribution and the colour for each class code. */
   landCover: { minzoom: number; maxzoom: number; attribution: string; colors: Record<string, string> };
 }
@@ -46,6 +50,8 @@ export type MapCommand =
         lines: { from: LngLat; to: LngLat; level: number }[];
       } | null;
     }
+  /** Yearly rainfall (mm) or sunlight (kWh/m²/day) on NASA POWER's 0.5° grid, for the overlay of that name. */
+  | { type: 'setClimateGrid'; layer: 'rainfall' | 'sunlight'; cells: { w: number; s: number; e: number; n: number; v: number }[] }
   | { type: 'queryElevation'; requestId: number; point: LngLat }
   /** Answer to a tileRequest: run-length encoded class codes ([value, count, ...]), or null for an empty tile. */
   | { type: 'tileData'; requestId: number; runs: number[] | null; error?: boolean };
@@ -56,6 +62,8 @@ export interface ViewState {
   bearing: number;
   pitch: number;
   projection: Projection;
+  /** [west, south, east, north] of what is on screen. */
+  bounds?: [number, number, number, number];
 }
 
 export type MapEvent =

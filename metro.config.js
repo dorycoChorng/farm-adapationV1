@@ -16,6 +16,8 @@ const PROXIES = {
   '/nasadem/': 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/',
   '/pc-sas/': 'https://planetarycomputer.microsoft.com/api/sas/',
   '/pc-data/': 'https://planetarycomputer.microsoft.com/api/data/',
+  '/isric-maps/': 'https://maps.isric.org/',
+  '/power/': 'https://power.larc.nasa.gov/',
 };
 function readBody(req) {
   return new Promise((resolve) => {
