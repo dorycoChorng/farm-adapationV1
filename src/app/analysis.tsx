@@ -9,6 +9,7 @@ import { BarChart, PhScale, StackedBar } from '../components/env/charts';
 import { LandBlocked } from '../components/env/LandBlocked';
 import { MonthStrip, SEASON_STYLE, SeasonLegend, useSeasonNow, useSeasonText } from '../components/env/Seasons';
 import { SaltCard, SoilFixesCard } from '../components/env/SoilFixes';
+import { SoilTestCard } from '../components/env/SoilTestCard';
 import { SourceInfo } from '../components/env/SourceInfo';
 import { ZoneGrid } from '../components/env/ZoneGrid';
 import { NetworkBanner } from '../components/NetworkBanner';
@@ -26,7 +27,7 @@ import {
   Segmented,
   tapFeedback,
 } from '../components/ui';
-import { latestSummaryForParcel, latestSummaryNear, saveSummary, type StoredSummary } from '../db/envRepository';
+import { latestSummaryForParcel, latestSummaryNear, saveSummary, type StoredSummary, updateSummary } from '../db/envRepository';
 import { getParcel } from '../db/repositories';
 import { ageInDays, analyzeLocation, type SectionKey } from '../env/analyze';
 import { appFetchJson, appFetchRange } from '../env/appFetch';
@@ -37,7 +38,7 @@ import { cropById, cropEmoji, cropName, CROPS } from '../env/crops';
 import { plantNow, type Season, seasonsFor } from '../env/seasons';
 import { soilFixPlan } from '../env/soilFixes';
 import { landCheck, rankCrops, siteValues, siteWarnings } from '../env/suitability';
-import type { EnvSummary, HwsdData, Section, SourceId } from '../env/types';
+import type { EnvSummary, HwsdData, Section, SoilTest, SourceId } from '../env/types';
 import { countryAt } from '../geo/countryAt';
 import { formatCoordinate, formatHectares } from '../geo/format';
 import type { LatLng } from '../geo/types';
@@ -128,6 +129,20 @@ export default function AnalysisScreen() {
   const { selection } = useAppState();
   const [target, setTarget] = useState<Target | null | undefined>(undefined);
   const [stored, setStored] = useState<StoredSummary | null>(null);
+  const storedRef = useRef<StoredSummary | null>(null);
+  storedRef.current = stored;
+  const saveSoilTest = useCallback(
+    async (test: SoilTest | null) => {
+      const current = storedRef.current;
+      if (!current) return;
+      const next: EnvSummary = { ...current.summary };
+      if (test) next.soilTest = test;
+      else delete next.soilTest;
+      setStored(await updateSummary(db, current, next));
+      tapFeedback('success');
+    },
+    [db],
+  );
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState<SectionKey[]>([]);
   const [got, setGot] = useState<Partial<Record<SectionKey, Section<unknown>>>>({});
@@ -198,7 +213,9 @@ export default function AnalysisScreen() {
         },
       });
       if (controller.signal.aborted) return;
-      setStored(await saveSummary(db, summary, target.parcelId));
+      // The farmer's own soil test belongs to the land, not to one analysis: carry it over.
+      const test = storedRef.current?.summary.soilTest;
+      setStored(await saveSummary(db, test ? { ...summary, soilTest: test } : summary, target.parcelId));
       tapFeedback('success');
     } finally {
       if (!controller.signal.aborted) setRunning(false);
@@ -314,7 +331,7 @@ export default function AnalysisScreen() {
           />
           <View style={{ height: spacing.md }} />
           {tab === 'climate' ? <ClimatePanel summary={summary} /> : null}
-          {tab === 'soil' ? <SoilPanel summary={summary} /> : null}
+          {tab === 'soil' ? <SoilPanel summary={summary} onSaveTest={stored && !running ? saveSoilTest : null} /> : null}
           {tab === 'land' ? <LandPanel summary={summary} /> : null}
           {tab === 'farming' ? <FarmingPanel summary={summary} /> : null}
 
@@ -638,9 +655,10 @@ function ClimatePanel({ summary }: { summary: EnvSummary }) {
   );
 }
 
-function SoilPanel({ summary }: { summary: EnvSummary }) {
+function SoilPanel({ summary, onSaveTest }: { summary: EnvSummary; onSaveTest: ((test: SoilTest | null) => void) | null }) {
   return (
     <>
+      <SoilTestCard test={summary.soilTest} onSave={(test) => onSaveTest?.(test)} disabled={!onSaveTest} />
       <SoilFixesCard summary={summary} />
       <SoilGridsCard summary={summary} />
       <SoilCompare summary={summary} />

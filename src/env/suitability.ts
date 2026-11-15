@@ -94,8 +94,8 @@ export function siteValues(s: EnvSummary): SiteValues {
     monthlyTempC: c ? c.monthlyTempC : null,
     annualRainMm: c ? c.annualRainMm : null,
     annualTempC: c ? c.annualTempC : null,
-    // SoilGrids (250 m) first; FAO's coarser soil map only where SoilGrids has nothing.
-    ph: (s.soil.status === 'ok' ? s.soil.data.properties.find((p) => p.key === 'phh2o')?.mean : null) ?? (s.hwsd?.status === 'ok' ? s.hwsd.data.ph : null) ?? null,
+    // The farmer's own test first, then SoilGrids (250 m), then FAO's coarser soil map.
+    ph: s.soilTest?.ph ?? (s.soil.status === 'ok' ? s.soil.data.properties.find((p) => p.key === 'phh2o')?.mean : null) ?? (s.hwsd?.status === 'ok' ? s.hwsd.data.ph : null) ?? null,
   };
 }
 

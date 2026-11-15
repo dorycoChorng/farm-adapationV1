@@ -16,6 +16,7 @@ export const WEB_PROXIES: Record<string, string> = {
   // NASA's NASADEM elevation on Microsoft Planetary Computer, and its read-token service.
   'https://nasademeuwest.blob.core.windows.net/nasadem-cog/': '/nasadem/',
   'https://planetarycomputer.microsoft.com/api/sas/': '/pc-sas/',
+  'https://planetarycomputer.microsoft.com/api/data/': '/pc-data/',
 };
 
 export function webUrl(url: string) {

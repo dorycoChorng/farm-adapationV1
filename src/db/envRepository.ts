@@ -42,6 +42,12 @@ export async function saveSummary(db: SqlDb, summary: EnvSummary, parcelId: stri
   return { id, parcelId, summary, createdAt: now };
 }
 
+/** Replaces a saved analysis's content in place (used to attach the farmer's own soil test). */
+export async function updateSummary(db: SqlDb, stored: StoredSummary, summary: EnvSummary): Promise<StoredSummary> {
+  await db.runAsync('UPDATE env_summaries SET summary_json = ? WHERE id = ?', [JSON.stringify(summary), stored.id]);
+  return { ...stored, summary };
+}
+
 export async function getSummary(db: SqlDb, id: string): Promise<StoredSummary | null> {
   const row = await db.getFirstAsync<SummaryRow>('SELECT * FROM env_summaries WHERE id = ?', [id]);
   return row ? toSummary(row) : null;

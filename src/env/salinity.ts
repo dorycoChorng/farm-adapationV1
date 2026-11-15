@@ -9,7 +9,7 @@ import type { EnvSummary } from './types';
  *
  * Clues:
  * - Sea water creeping inland: distance to the coast (Natural Earth 1:110m outline,
- *   bundled) and height above sea (NASA/AWS elevation already in the analysis).
+ *   bundled) and height above sea (NASADEM elevation already in the analysis).
  * - Mangroves on the land (ESA WorldCover class 95) grow only in brackish water.
  * - Salt left behind by evaporation: months when NASA POWER rain is well below
  *   reference evapotranspiration (Hargreaves–Samani, from NASA POWER temperature and
@@ -17,7 +17,7 @@ import type { EnvSummary } from './types';
  */
 
 export type SaltLevel = 'low' | 'medium' | 'high';
-export type SaltReason = 'coast-near-low' | 'coast-near' | 'coast-low' | 'mangrove' | 'dry-months' | 'arid' | 'low-spots' | 'inland';
+export type SaltReason = 'measured' | 'coast-near-low' | 'coast-near' | 'coast-low' | 'mangrove' | 'dry-months' | 'arid' | 'low-spots' | 'inland';
 
 export interface SaltRisk {
   level: SaltLevel;
@@ -29,6 +29,8 @@ export interface SaltRisk {
   dryMonths: number | null;
   /** Yearly rain ÷ yearly reference evapotranspiration (below 0.5 is semi-arid). */
   aridity: number | null;
+  /** The farmer's own water test (dS/m); when given it decides the level. */
+  measuredEc: number | null;
 }
 
 // ---------------------------------------------------------------- coastline
@@ -184,8 +186,14 @@ export function saltRisk(summary: EnvSummary): SaltRisk {
   }
 
   if (!reasons.length) reasons.push('inland');
-  const level: SaltLevel = score >= 3 ? 'high' : score >= 1 ? 'medium' : 'low';
-  return { level, reasons, coastKm, elevationM, dryMonths, aridity };
+  let level: SaltLevel = score >= 3 ? 'high' : score >= 1 ? 'medium' : 'low';
+  // A measurement beats every clue: the FAO bands decide, and the clues stay as background.
+  const measuredEc = summary.soilTest?.waterEcDsM ?? null;
+  if (measuredEc !== null) {
+    level = measuredEc > EC_BANDS.severe ? 'high' : measuredEc >= EC_BANDS.fine ? 'medium' : 'low';
+    reasons.unshift('measured');
+  }
+  return { level, reasons, coastKm, elevationM, dryMonths, aridity, measuredEc };
 }
 
 /**

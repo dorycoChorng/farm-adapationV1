@@ -26,6 +26,10 @@
       "destination": "https://planetarycomputer.microsoft.com/api/sas/:path*"
     },
     {
+      "source": "/pc-data/:path*",
+      "destination": "https://planetarycomputer.microsoft.com/api/data/:path*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

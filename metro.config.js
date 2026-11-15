@@ -15,11 +15,27 @@ const PROXIES = {
   '/gaez/': 'https://storage.googleapis.com/fao-gismgr-gaez-v5-data/',
   '/nasadem/': 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/',
   '/pc-sas/': 'https://planetarycomputer.microsoft.com/api/sas/',
+  '/pc-data/': 'https://planetarycomputer.microsoft.com/api/data/',
 };
+function readBody(req) {
+  return new Promise((resolve) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(chunks.length ? Buffer.concat(chunks) : undefined));
+  });
+}
 async function proxy(req, res, path) {
   try {
+    // Planetary Computer's mosaic registration is a POST with a JSON body.
+    const post = req.method === 'POST';
     const up = await fetch(PROXIES[path] + req.url.slice(path.length), {
-      headers: { ...(req.headers.range ? { Range: req.headers.range } : {}), Accept: req.headers.accept ?? '*/*' },
+      method: post ? 'POST' : 'GET',
+      body: post ? await readBody(req) : undefined,
+      headers: {
+        ...(req.headers.range ? { Range: req.headers.range } : {}),
+        ...(post && req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {}),
+        Accept: req.headers.accept ?? '*/*',
+      },
     });
     const headers = {};
     for (const h of ['content-type', 'content-range', 'accept-ranges']) if (up.headers.get(h)) headers[h] = up.headers.get(h);

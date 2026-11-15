@@ -2,6 +2,34 @@ import type { fixEn } from './fixEn';
 
 /** Khmer strings for the salt-water check and the soil fixes. Drafted; needs review by a native speaker. */
 export const fixKm: Record<keyof typeof fixEn, string> = {
+  'test.title': 'លទ្ធផលតេស្តដីរបស់ខ្ញុំ',
+  'test.intro': 'តើអ្នកបានតេស្តដី ឬទឹករបស់អ្នកហើយឬនៅ? បញ្ចូលលទ្ធផល ហើយកម្មវិធីនឹងប្រើវាជំនួសផែនទីដី។',
+  'test.where': 'ការិយាល័យកសិកម្មក្នុងតំបន់អាចតេស្តដីបាន។ ឧបករណ៍តេស្ត pH និងឧបករណ៍វាស់ EC ទឹក មានតម្លៃពីរបីដុល្លារ។',
+  'test.add': 'បញ្ចូលលទ្ធផលតេស្តដី',
+  'test.edit': 'កែប្រែ',
+  'test.clear': 'លុប',
+  'test.save': 'រក្សាទុក',
+  'test.cancel': 'បោះបង់',
+  'test.ph': 'pH ដី',
+  'test.phHint': 'ចន្លោះ 3 ដល់ 10 ឧ. 5.5',
+  'test.om': 'សារធាតុសរីរាង្គ (%)',
+  'test.omHint': 'ជាធម្មតា 0.5 ដល់ 6',
+  'test.ec': 'ជាតិប្រៃក្នុងទឹក EC (dS/m)',
+  'test.ecHint': 'ពីឧបករណ៍វាស់ EC; µS/cm ÷ 1000',
+  'test.texture': 'ដីមានអារម្មណ៍',
+  'test.texture.sandy': 'ខ្សាច់ (គ្រើម)',
+  'test.texture.loam': 'ល្បាយ (ផុយ)',
+  'test.texture.clay': 'ឥដ្ឋ (ស្អិត)',
+  'test.invalid': 'សូមពិនិត្យលេខ៖ pH 3–10 សារធាតុសរីរាង្គ 0–30 % EC 0–50 dS/m។ ទុកប្រអប់ទទេ បើអ្នកមិនបានតេស្ត។',
+  'test.used': 'កម្មវិធីប្រើលទ្ធផលទាំងនេះជំនួសផែនទីដី។',
+  'test.savedOn': 'បានបញ្ចូលថ្ងៃ {date}',
+  'fix.measured': 'ពីលទ្ធផលតេស្តរបស់អ្នក',
+  'fix.p.sandy.whyTest': 'ដីរបស់អ្នកមានអារម្មណ៍ជាខ្សាច់៖ ទឹក និងជីហូរចេញលឿន។',
+  'fix.p.heavy-clay.whyTest': 'ដីរបស់អ្នកមានអារម្មណ៍ជាដីឥដ្ឋ៖ វារក្សាទឹកបានល្អ ប៉ុន្តែស្អិតពេលសើម និងរឹងពេលស្ងួត។',
+  'salt.reason.measured': 'លទ្ធផលតេស្តទឹករបស់អ្នក៖ {ec} dS/m។ {band}',
+  'salt.band.fine': 'ល្អសម្រាប់គ្រប់ដំណាំ។',
+  'salt.band.care': 'ត្រូវប្រុងប្រយ័ត្នជាមួយដំណាំងាយរងគ្រោះ ដូចជាស្រូវ សណ្តែក និងបន្លែភាគច្រើន។',
+  'salt.band.severe': 'ប្រៃពេកសម្រាប់ដំណាំភាគច្រើន។',
   'fix.title': 'កែលម្អដី',
   'fix.glance': 'ដីនេះត្រូវការកែលម្អមុនពេលដាំ ({list})។ សូមមើល ដី → កែលម្អដី ដើម្បីដឹងថាត្រូវធ្វើអ្វី។',
   'fix.notSuitableTitle': 'ដីនេះត្រូវការកែលម្អមុនពេលដាំ',
@@ -85,5 +113,5 @@ export const fixKm: Record<keyof typeof fixEn, string> = {
   'salt.test':
     'របៀបពិនិត្យ៖ ឧបករណ៍វាស់ជាតិប្រៃក្នុងទឹក (EC meter) មានតម្លៃពីរបីដុល្លារ។ ក្រោម 0.7 dS/m (700 µS/cm) ល្អសម្រាប់គ្រប់ដំណាំ។ ពី 0.7 ដល់ 3 dS/m ត្រូវប្រុងប្រយ័ត្នជាមួយដំណាំងាយរងគ្រោះ ដូចជាស្រូវ សណ្តែក និងបន្លែភាគច្រើន។ លើសពី 3 dS/m ប្រៃពេកសម្រាប់ដំណាំភាគច្រើន។',
   'salt.sources':
-    'ជាការប៉ាន់ស្មាន មិនមែនការវាស់វែងទេ៖ ចម្ងាយពីសមុទ្រ (ផែនទី Natural Earth ត្រឹមត្រូវប្រហែល 10 គីឡូម៉ែត្រ) កម្ពស់ (NASA SRTM តាម AWS) ភ្លៀង និងការហួតទឹក (NASA POWER) និងព្រៃកោងកាង (ESA WorldCover)។ កម្រិតយកតាម FAO Irrigation and Drainage Paper 29។',
+    'ជាការប៉ាន់ស្មាន មិនមែនការវាស់វែងទេ៖ ចម្ងាយពីសមុទ្រ (ផែនទី Natural Earth ត្រឹមត្រូវប្រហែល 10 គីឡូម៉ែត្រ) កម្ពស់ (NASA NASADEM តាម Planetary Computer) ភ្លៀង និងការហួតទឹក (NASA POWER) និងព្រៃកោងកាង (ESA WorldCover)។ កម្រិតយកតាម FAO Irrigation and Drainage Paper 29។',
 };

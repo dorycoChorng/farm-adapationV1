@@ -1,4 +1,6 @@
 import type { LatLng } from '../geo/types';
+import type { FetchJson } from './analyze';
+import { NASADEM_LAT, nasademUrl, planetaryToken } from './planetary';
 import { type CogInfo, type FetchRange, fetchRange, openCog, pixelFor, RasterNotFoundError, readPixel, readTile } from './tiff';
 import type { LandCoverData, TerrainData } from './types';
 
@@ -60,7 +62,60 @@ export function hornSlope(w: number[], cellSize: number) {
   return (Math.atan(Math.sqrt(dx * dx + dy * dy)) * 180) / Math.PI;
 }
 
-export async function readTerrain(p: LatLng, get: FetchRange = fetchRange): Promise<TerrainData | null> {
+/** Horn's slope in degrees for cells that are not square (NASADEM cells shrink east–west away from the equator). */
+export function hornSlopeXY(w: number[], cellX: number, cellY: number) {
+  const [a, b, c, d, , f, g, h, i] = w;
+  const dx = (c + 2 * f + i - (a + 2 * d + g)) / (8 * cellX);
+  const dy = (g + 2 * h + i - (a + 2 * b + c)) / (8 * cellY);
+  return (Math.atan(Math.sqrt(dx * dx + dy * dy)) * 180) / Math.PI;
+}
+
+const ARCSEC = 1 / 3600;
+const M_PER_DEG = 111320;
+
+/** Elevation and slope from NASA's NASADEM (1 arc-second, about 30 m) on Microsoft Planetary Computer. */
+async function nasademTerrain(p: LatLng, get: FetchRange, getJson: FetchJson): Promise<TerrainData | null> {
+  if (p.latitude < NASADEM_LAT[0] || p.latitude > NASADEM_LAT[1]) return null;
+  const sas = await planetaryToken(getJson);
+  // NASADEM pixel centres sit on whole arc-seconds; read the 3 × 3 cells around the point.
+  const gx = Math.round(p.longitude / ARCSEC);
+  const gy = Math.round(p.latitude / ARCSEC);
+  const window: (number | null)[] = [];
+  for (const dy of [1, 0, -1]) {
+    for (const dx of [-1, 0, 1]) {
+      const lon = (gx + dx) * ARCSEC;
+      const lat = (gy + dy) * ARCSEC;
+      const info = await cog(nasademUrl(lat, lon, sas), get);
+      const px = pixelFor(info, lon, lat);
+      const v = px ? await readPixel(info, px[0], px[1], get) : null;
+      window.push(v !== null && v > -500 ? v : null);
+    }
+  }
+  const centre = window[4];
+  if (centre === null) return null;
+  const cellY = ARCSEC * M_PER_DEG;
+  const cellX = cellY * Math.cos((p.latitude * Math.PI) / 180);
+  const slopeDeg = window.every((v) => v !== null) ? Number(hornSlopeXY(window as number[], cellX, cellY).toFixed(1)) : null;
+  return { elevationM: centre, slopeDeg, cellSizeM: Number(cellY.toFixed(1)), source: 'nasadem' };
+}
+
+/**
+ * Elevation and slope at a point: NASADEM via Planetary Computer when a JSON fetcher is
+ * given (it is needed for the read token), else or on failure AWS Terrain Tiles.
+ */
+export async function readTerrain(p: LatLng, get: FetchRange = fetchRange, getJson?: FetchJson): Promise<TerrainData | null> {
+  if (getJson) {
+    try {
+      const t = await nasademTerrain(p, get, getJson);
+      if (t) return t;
+    } catch {
+      // Planetary Computer unreachable: fall back to AWS below.
+    }
+  }
+  return awsTerrain(p, get);
+}
+
+async function awsTerrain(p: LatLng, get: FetchRange): Promise<TerrainData | null> {
   const [gx, gy] = demPixel(p);
   const window: (number | null)[] = await Promise.all(
     [-1, 0, 1].flatMap((dy) => [-1, 0, 1].map((dx) => demAt(gx + dx, gy + dy, DEM_ZOOM, get))),
@@ -69,7 +124,7 @@ export async function readTerrain(p: LatLng, get: FetchRange = fetchRange): Prom
   if (centre === null) return null;
   const cellSizeM = demCellSize(p.latitude);
   const slopeDeg = window.every((v) => v !== null) ? Number(hornSlope(window as number[], cellSizeM).toFixed(1)) : null;
-  return { elevationM: centre, slopeDeg, cellSizeM: Number(cellSizeM.toFixed(1)) };
+  return { elevationM: centre, slopeDeg, cellSizeM: Number(cellSizeM.toFixed(1)), source: 'aws' };
 }
 
 // ---------------------------------------------------------------- land cover

@@ -34,8 +34,8 @@ interface AppStateValue {
 }
 
 export const DEFAULT_LAYERS: LayerState = {
-  // Sub-metre imagery so field edges are visible; Sentinel-2 (open licence) stays selectable.
-  base: 'satellite-esri',
+  // ESA Copernicus Sentinel-2 (10 m, open licence) by default; Esri's sub-metre imagery stays selectable for tracing field edges.
+  base: 'satellite-s2',
   overlays: { places: true, hillshade: false, boundaries: true, landcover: false, waterflow: false },
 };
 

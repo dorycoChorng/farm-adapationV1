@@ -33,6 +33,8 @@ export type Severity = 'blocker' | 'major' | 'minor';
 export interface SoilProblem {
   id: ProblemId;
   severity: Severity;
+  /** True when the number comes from the farmer's own test, not a soil map. */
+  measured?: boolean;
   /** The number behind it, for the sentence that explains it (pH, %, g/kg, degrees, share). */
   value: number | null;
   /** Catalogue crops that cope with this problem better than most. */
@@ -65,7 +67,22 @@ export const COPING_CROPS: Record<ProblemId, string[]> = {
   'salt-medium': ['sorghum', 'cowpea', 'soybean', 'coconut'],
 };
 
+/** Organic matter to organic carbon (Van Bemmelen factor), as g/kg. */
+const omToSocGKg = (omPct: number) => (omPct / 1.724) * 10;
+
+/** A value from the farmer's own test, where one was entered. */
+function testValue(s: EnvSummary, key: 'phh2o' | 'soc'): number | null {
+  const t = s.soilTest;
+  if (!t) return null;
+  if (key === 'phh2o') return t.ph;
+  return t.organicMatterPct === null ? null : omToSocGKg(t.organicMatterPct);
+}
+
 function soilValue(s: EnvSummary, key: 'phh2o' | 'soc' | 'clay' | 'sand' | 'nitrogen' | 'cec'): number | null {
+  if (key === 'phh2o' || key === 'soc') {
+    const measured = testValue(s, key);
+    if (measured !== null) return measured;
+  }
   const sg = s.soil.status === 'ok' ? s.soil.data.properties.find((p) => p.key === key)?.mean ?? null : null;
   if (sg !== null) return sg;
   if (s.hwsd?.status !== 'ok') return null;
@@ -103,20 +120,29 @@ export const LIMITS = {
 
 export function soilFixPlan(summary: EnvSummary): SoilFixPlan {
   const problems: SoilProblem[] = [];
-  const add = (id: ProblemId, severity: Severity, value: number | null) => problems.push({ id, severity, value, crops: COPING_CROPS[id] });
+  const add = (id: ProblemId, severity: Severity, value: number | null, measured = false) =>
+    problems.push({ id, severity, value, crops: COPING_CROPS[id], ...(measured ? { measured } : {}) });
+  const test = summary.soilTest;
 
   const ph = soilValue(summary, 'phh2o');
+  const phMeasured = test?.ph != null;
   if (ph !== null) {
-    if (ph < LIMITS.veryAcidPh) add('very-acid', 'blocker', ph);
-    else if (ph < LIMITS.acidPh) add('acid', 'major', ph);
-    else if (ph > LIMITS.alkalinePh) add('alkaline', 'major', ph);
+    if (ph < LIMITS.veryAcidPh) add('very-acid', 'blocker', ph, phMeasured);
+    else if (ph < LIMITS.acidPh) add('acid', 'major', ph, phMeasured);
+    else if (ph > LIMITS.alkalinePh) add('alkaline', 'major', ph, phMeasured);
   }
   const soc = soilValue(summary, 'soc');
-  if (soc !== null && soc < LIMITS.lowSoc) add('low-organic', 'major', soc);
-  const sand = soilValue(summary, 'sand');
-  const clay = soilValue(summary, 'clay');
-  if (sand !== null && sand >= LIMITS.sandyPct) add('sandy', 'major', sand);
-  else if (clay !== null && clay >= LIMITS.heavyClayPct) add('heavy-clay', 'minor', clay);
+  if (soc !== null && soc < LIMITS.lowSoc) add('low-organic', 'major', soc, test?.organicMatterPct != null);
+  if (test?.texture) {
+    // Texture by feel replaces the mapped sand and clay shares.
+    if (test.texture === 'sandy') add('sandy', 'major', null, true);
+    else if (test.texture === 'clay') add('heavy-clay', 'minor', null, true);
+  } else {
+    const sand = soilValue(summary, 'sand');
+    const clay = soilValue(summary, 'clay');
+    if (sand !== null && sand >= LIMITS.sandyPct) add('sandy', 'major', sand);
+    else if (clay !== null && clay >= LIMITS.heavyClayPct) add('heavy-clay', 'minor', clay);
+  }
   const drainage = summary.hwsd?.status === 'ok' ? summary.hwsd.data.drainage : null;
   if (drainage === 'P' || drainage === 'VP') add('poor-drainage', 'major', null);
   const cec = soilValue(summary, 'cec');
@@ -133,8 +159,8 @@ export function soilFixPlan(summary: EnvSummary): SoilFixPlan {
   }
 
   const salt = saltRisk(summary);
-  if (salt.level === 'high') add('salt-high', 'blocker', null);
-  else if (salt.level === 'medium') add('salt-medium', 'major', null);
+  if (salt.level === 'high') add('salt-high', 'blocker', null, salt.measuredEc !== null);
+  else if (salt.level === 'medium') add('salt-medium', 'major', null, salt.measuredEc !== null);
 
   problems.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   const notSuitable = problems.some((p) => p.severity === 'blocker');

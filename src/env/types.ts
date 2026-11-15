@@ -46,6 +46,8 @@ export interface TerrainData {
   elevationM: number;
   slopeDeg: number | null;
   cellSizeM: number;
+  /** Which elevation model answered: NASADEM via Planetary Computer, or AWS Terrain Tiles as backup. Absent in older analyses (AWS). */
+  source?: 'nasadem' | 'aws';
 }
 
 export interface LandCoverData {
@@ -120,6 +122,19 @@ export interface ZoneData {
   zones: Zone[];
 }
 
+/** The farmer's own soil and water test. Where a value is given it replaces the soil maps. */
+export interface SoilTest {
+  ph: number | null;
+  /** Organic matter, % (lab reports or test kits; organic carbon × 1.724). */
+  organicMatterPct: number | null;
+  /** Salt in the irrigation water: electrical conductivity, dS/m (µS/cm ÷ 1000). */
+  waterEcDsM: number | null;
+  /** Texture by feel. */
+  texture: 'sandy' | 'loam' | 'clay' | null;
+  /** ISO date the test was entered. */
+  enteredAt: string;
+}
+
 export interface EnvSummary {
   version: 1;
   location: LatLng;
@@ -135,6 +150,8 @@ export interface EnvSummary {
   hwsd?: Section<HwsdData>;
   production?: Section<LocalProductionData>;
   zones?: Section<ZoneData>;
+  /** The farmer's own soil and water test, kept across re-analyses. */
+  soilTest?: SoilTest;
 }
 
 export interface SourceInfo {

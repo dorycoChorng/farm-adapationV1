@@ -59,14 +59,32 @@ export const BASE_LAYERS: Record<BaseLayerId, BaseLayerDef> = {
   },
 };
 
-export const TERRAIN_DEM: RasterProvider & { encoding: 'terrarium' } = {
-  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+/**
+ * Terrain for the map (terrain shading, the water-flow layer, tap-for-elevation): NASA's
+ * NASADEM rendered as Terrarium tiles by the Planetary Computer data API. The map page
+ * serves them through its own farmdem:// protocol (src/map/web/map-app.js) so it can fall
+ * back to AWS Terrain Tiles where Planetary Computer has none (zoomed far out, beyond
+ * 60° N / 56° S) or can't be reached.
+ */
+export interface TerrainSource extends RasterProvider {
+  encoding: 'terrarium';
+  /** Planetary Computer data API base URL; mapConfig.ts fills in the web proxy path. */
+  planetary: { dataApi: string; collection: 'nasadem'; asset: 'elevation'; minzoom: number } | null;
+  /** Used where Planetary Computer has no tile. */
+  fallbackTiles: string[];
+}
+
+export const TERRAIN_DEM: TerrainSource = {
+  tiles: ['farmdem://{z}/{x}/{y}'],
   tileSize: 256,
   minzoom: 0,
-  maxzoom: 15,
+  // NASADEM is 30 m; beyond z13 the map only upscales.
+  maxzoom: 13,
   encoding: 'terrarium',
   attribution:
-    '<a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (Mapzen, AWS Open Data; SRTM, GMTED, ETOPO1 and others)',
+    'NASADEM (NASA/JPL) via <a href="https://planetarycomputer.microsoft.com/">Microsoft Planetary Computer</a>; backup <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (AWS Open Data)',
+  planetary: { dataApi: 'https://planetarycomputer.microsoft.com/api/data/v1/', collection: 'nasadem', asset: 'elevation', minzoom: 7 },
+  fallbackTiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
 };
 
 /** Zoom used for point elevation lookups; ~38 m/pixel at the equator. Source DEMs are 30–90 m in most farmland. */
