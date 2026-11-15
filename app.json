@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Farm Adaptation",
+    "slug": "farm-adaptation",
+    "scheme": "farmadaptation",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dorycochorng.farmadaptation"
+    },
+    "android": {
+      "package": "com.dorycochorng.farmadaptation",
+      "adaptiveIcon": {
+        "backgroundColor": "#E8F5E9",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "ACCESS_BACKGROUND_LOCATION"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Farm Adaptation uses your location only when you tap My Location, to show where you are and help you measure your field.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Farm Adaptation lets you choose a photo of a plant to identify it. The photo is only sent when you tap Identify.",
+          "cameraPermission": "Farm Adaptation uses the camera only when you tap Take photo, to identify a plant.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "geocoderBaseUrl": "https://nominatim.openstreetmap.org",
+      "geocoderUserAgent": "FarmAdaptationApp/0.1 (https://github.com/dorycoChorng/Farm-Adaptation-App)",
+      "plantIdUrl": null
+    }
+  }
+}

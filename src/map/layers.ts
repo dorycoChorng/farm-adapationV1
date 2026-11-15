@@ -1,0 +1,96 @@
+/**
+ * Map layer catalogue. Each entry records provider, licence and attribution so
+ * the app never shows imagery without its source. `status: 'planned'` layers
+ * are listed in the layer picker as unavailable until a provider is integrated
+ * through the backend; the app does not fake them.
+ */
+export type BaseLayerId = 'satellite-s2' | 'satellite-esri' | 'outline';
+export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover';
+export type PlannedLayerId = 'rainfall' | 'soil' | 'sunlight';
+
+export interface RasterProvider {
+  tiles: string[];
+  tileSize: number;
+  minzoom: number;
+  maxzoom: number;
+  attribution: string;
+}
+
+export interface BaseLayerDef {
+  id: BaseLayerId;
+  provider: RasterProvider | null;
+  licence: string;
+  notes: string;
+}
+
+export const BASE_LAYERS: Record<BaseLayerId, BaseLayerDef> = {
+  'satellite-s2': {
+    id: 'satellite-s2',
+    provider: {
+      tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg'],
+      tileSize: 256,
+      minzoom: 0,
+      // Sentinel-2 is 10 m/pixel; beyond z14 tiles are only upscaled.
+      maxzoom: 14,
+      attribution:
+        '<a href="https://s2maps.eu">Sentinel-2 cloudless</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016)',
+    },
+    licence: 'CC BY 4.0 (2016 edition). Later editions are CC BY-NC-SA 4.0 and need a commercial licence for commercial use.',
+    notes: '10 m resolution cloud-free mosaic from 2016. Good for orientation; too coarse to trace small field edges precisely.',
+  },
+  'satellite-esri': {
+    id: 'satellite-esri',
+    provider: {
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256,
+      minzoom: 0,
+      maxzoom: 19,
+      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+    },
+    licence:
+      'Esri terms of use. Suitable for development and evaluation; production apps need an ArcGIS Location Platform account and API key.',
+    notes: 'Sub-metre imagery in many regions, so field edges are usually visible. Capture dates vary by area.',
+  },
+  outline: {
+    id: 'outline',
+    provider: null,
+    licence: 'Natural Earth, public domain.',
+    notes: 'Bundled country outlines at 1:110m scale. Works offline; no imagery.',
+  },
+};
+
+export const TERRAIN_DEM: RasterProvider & { encoding: 'terrarium' } = {
+  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+  tileSize: 256,
+  minzoom: 0,
+  maxzoom: 15,
+  encoding: 'terrarium',
+  attribution:
+    '<a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (Mapzen, AWS Open Data; SRTM, GMTED, ETOPO1 and others)',
+};
+
+/** Zoom used for point elevation lookups; ~38 m/pixel at the equator. Source DEMs are 30–90 m in most farmland. */
+export const ELEVATION_LOOKUP_ZOOM = 12;
+
+/**
+ * Land-cover overlay, drawn from ESA WorldCover 2021 v200 (10 m, CC BY 4.0). The bucket
+ * sends no CORS headers, so the app reads the files and hands class codes to the map page.
+ */
+export const LAND_COVER_OVERLAY = {
+  minzoom: 7,
+  maxzoom: 14,
+  attribution:
+    '<a href="https://esa-worldcover.org">ESA WorldCover 2021</a> v200 (CC BY 4.0), © ESA WorldCover project / contains modified Copernicus Sentinel data (2021)',
+  licence: 'CC BY 4.0',
+};
+
+export interface PlannedLayer {
+  id: PlannedLayerId;
+  candidateSources: string;
+}
+
+export const PLANNED_LAYERS: PlannedLayer[] = [
+  { id: 'rainfall', candidateSources: 'CHIRPS, NASA GPM IMERG (via backend)' },
+  { id: 'soil', candidateSources: 'ISRIC SoilGrids 250 m (modelled, not measured)' },
+  { id: 'sunlight', candidateSources: 'NASA POWER solar radiation (via backend)' },
+];

@@ -1,0 +1,564 @@
+{
+  "_note": "Display names for well-known crops, keyed by the ECOCROP species name. Khmer names are drafted and need review by a native speaker. Every other ECOCROP food crop is still included and searchable by its ECOCROP common names.",
+  "Oryza sativa": {
+    "id": "rice",
+    "en": "Rice",
+    "km": "ស្រូវ",
+    "category": "cereals"
+  },
+  "Zea mays": {
+    "id": "maize",
+    "en": "Maize (corn)",
+    "km": "ពោត",
+    "category": "cereals"
+  },
+  "Sorghum bicolor": {
+    "id": "sorghum",
+    "en": "Sorghum",
+    "category": "cereals"
+  },
+  "Triticum aestivum": {
+    "id": "wheat",
+    "en": "Wheat",
+    "km": "ស្រូវសាលី",
+    "category": "cereals"
+  },
+  "Hordeum vulgare": {
+    "id": "barley",
+    "en": "Barley",
+    "category": "cereals",
+    "km": "ស្រូវបាឡេ"
+  },
+  "Avena sativa": {
+    "id": "oats",
+    "en": "Oats",
+    "category": "cereals",
+    "km": "ស្រូវអូត"
+  },
+  "Pennisetum glaucum": {
+    "id": "pearl-millet",
+    "en": "Pearl millet",
+    "category": "cereals",
+    "km": "ស្រូវមីយ៉េ"
+  },
+  "Manihot esculenta": {
+    "id": "cassava",
+    "en": "Cassava",
+    "km": "ដំឡូងមី",
+    "category": "roots"
+  },
+  "Ipomoea batatas": {
+    "id": "sweet-potato",
+    "en": "Sweet potato",
+    "km": "ដំឡូងជ្វា",
+    "category": "roots"
+  },
+  "Colocasia esculenta": {
+    "id": "taro",
+    "en": "Taro",
+    "km": "ត្រាវ",
+    "category": "roots"
+  },
+  "Solanum tuberosum": {
+    "id": "potato",
+    "en": "Potato",
+    "km": "ដំឡូងបារាំង",
+    "category": "roots"
+  },
+  "Dioscorea alata": {
+    "id": "yam",
+    "en": "Water yam",
+    "category": "roots"
+  },
+  "Vigna radiata": {
+    "id": "mungbean",
+    "en": "Mung bean",
+    "km": "សណ្ដែកបាយ",
+    "category": "pulses"
+  },
+  "Glycine max": {
+    "id": "soybean",
+    "en": "Soybean",
+    "km": "សណ្ដែកសៀង",
+    "category": "pulses"
+  },
+  "Arachis hypogaea": {
+    "id": "groundnut",
+    "en": "Groundnut (peanut)",
+    "km": "សណ្ដែកដី",
+    "category": "pulses"
+  },
+  "Vigna unguiculata": {
+    "id": "cowpea",
+    "en": "Cowpea / long bean",
+    "km": "សណ្ដែកគួរ",
+    "category": "pulses"
+  },
+  "Vigna mungo": {
+    "id": "black-gram",
+    "en": "Black gram",
+    "category": "pulses",
+    "km": "សណ្ដែកខ្មៅ"
+  },
+  "Cajanus cajan": {
+    "id": "pigeon-pea",
+    "en": "Pigeon pea",
+    "category": "pulses"
+  },
+  "Cicer arietinum": {
+    "id": "chickpea",
+    "en": "Chickpea",
+    "category": "pulses"
+  },
+  "Lens culinaris": {
+    "id": "lentil",
+    "en": "Lentil",
+    "category": "pulses"
+  },
+  "Phaseolus vulgaris": {
+    "id": "common-bean",
+    "en": "Common bean",
+    "category": "pulses",
+    "km": "សណ្ដែកបារាំង"
+  },
+  "Sesamum indicum": {
+    "id": "sesame",
+    "en": "Sesame",
+    "km": "ល្ង",
+    "category": "other"
+  },
+  "Helianthus annuus": {
+    "id": "sunflower",
+    "en": "Sunflower",
+    "km": "ផ្កាឈូករ័ត្ន",
+    "category": "other"
+  },
+  "Saccharum officinarum": {
+    "id": "sugarcane",
+    "en": "Sugarcane",
+    "km": "អំពៅ",
+    "category": "other"
+  },
+  "Elaeis guineensis": {
+    "id": "oil-palm",
+    "en": "Oil palm",
+    "km": "ដូងប្រេង",
+    "category": "other"
+  },
+  "Borassus flabellifer": {
+    "id": "sugar-palm",
+    "en": "Sugar palm",
+    "km": "ត្នោត",
+    "category": "other"
+  },
+  "Piper nigrum": {
+    "id": "black-pepper",
+    "en": "Black pepper",
+    "km": "ម្រេច",
+    "category": "other"
+  },
+  "Coffea arabica": {
+    "id": "coffee-arabica",
+    "en": "Coffee (arabica)",
+    "km": "កាហ្វេ",
+    "category": "other"
+  },
+  "Coffea canephora": {
+    "id": "coffee-robusta",
+    "en": "Coffee (robusta)",
+    "km": "កាហ្វេ",
+    "category": "other"
+  },
+  "Camellia sinensis": {
+    "id": "tea",
+    "en": "Tea",
+    "km": "តែ",
+    "category": "other"
+  },
+  "Theobroma cacao": {
+    "id": "cocoa",
+    "en": "Cocoa",
+    "km": "កាកាវ",
+    "category": "other"
+  },
+  "Zingiber officinale": {
+    "id": "ginger",
+    "en": "Ginger",
+    "km": "ខ្ញី",
+    "category": "other"
+  },
+  "Curcuma longa": {
+    "id": "turmeric",
+    "en": "Turmeric",
+    "km": "រមៀត",
+    "category": "other"
+  },
+  "Cymbopogon citratus": {
+    "id": "lemongrass",
+    "en": "Lemongrass",
+    "km": "ស្លឹកគ្រៃ",
+    "category": "other"
+  },
+  "Alpinia galanga": {
+    "id": "galangal",
+    "en": "Galangal",
+    "km": "រំដេង",
+    "category": "other"
+  },
+  "Musa acuminata": {
+    "id": "banana",
+    "en": "Banana",
+    "km": "ចេក",
+    "category": "fruits"
+  },
+  "Mangifera indica": {
+    "id": "mango",
+    "en": "Mango",
+    "km": "ស្វាយ",
+    "category": "fruits"
+  },
+  "Durio zibethinus": {
+    "id": "durian",
+    "en": "Durian",
+    "km": "ធុរេន",
+    "category": "fruits"
+  },
+  "Artocarpus heterophyllus": {
+    "id": "jackfruit",
+    "en": "Jackfruit",
+    "km": "ខ្នុរ",
+    "category": "fruits"
+  },
+  "Carica papaya": {
+    "id": "papaya",
+    "en": "Papaya",
+    "km": "ល្ហុង",
+    "category": "fruits"
+  },
+  "Ananas comosus": {
+    "id": "pineapple",
+    "en": "Pineapple",
+    "km": "ម្នាស់",
+    "category": "fruits"
+  },
+  "Cocos nucifera": {
+    "id": "coconut",
+    "en": "Coconut",
+    "km": "ដូង",
+    "category": "fruits"
+  },
+  "Nephelium lappaceum": {
+    "id": "rambutan",
+    "en": "Rambutan",
+    "km": "សាវម៉ាវ",
+    "category": "fruits"
+  },
+  "Dimocarpus longan var. longan": {
+    "id": "longan",
+    "en": "Longan",
+    "km": "មៀន",
+    "category": "fruits"
+  },
+  "Litchi chinensis": {
+    "id": "lychee",
+    "en": "Lychee",
+    "km": "គូលែន",
+    "category": "fruits"
+  },
+  "Garcinia mangostana": {
+    "id": "mangosteen",
+    "en": "Mangosteen",
+    "km": "មង្ឃុត",
+    "category": "fruits"
+  },
+  "Psidium guajava": {
+    "id": "guava",
+    "en": "Guava",
+    "km": "ត្របែក",
+    "category": "fruits"
+  },
+  "Citrus sinensis": {
+    "id": "orange",
+    "en": "Orange",
+    "km": "ក្រូច",
+    "category": "fruits"
+  },
+  "Citrus grandis": {
+    "id": "pomelo",
+    "en": "Pomelo",
+    "km": "ក្រូចថ្លុង",
+    "category": "fruits"
+  },
+  "Citrus aurantifolia": {
+    "id": "lime",
+    "en": "Lime",
+    "km": "ក្រូចឆ្មារ",
+    "category": "fruits"
+  },
+  "Tamarindus indica": {
+    "id": "tamarind",
+    "en": "Tamarind",
+    "km": "អម្ពិល",
+    "category": "fruits"
+  },
+  "Anacardium occidentale": {
+    "id": "cashew",
+    "en": "Cashew",
+    "km": "ស្វាយចន្ទី",
+    "category": "fruits"
+  },
+  "Persea americana": {
+    "id": "avocado",
+    "en": "Avocado",
+    "km": "ប័រ",
+    "category": "fruits"
+  },
+  "Passiflora edulis": {
+    "id": "passion-fruit",
+    "en": "Passion fruit",
+    "category": "fruits"
+  },
+  "Citrullus lanatus": {
+    "id": "watermelon",
+    "en": "Watermelon",
+    "km": "ឪឡឹក",
+    "category": "fruits"
+  },
+  "Cucumis melo": {
+    "id": "melon",
+    "en": "Melon",
+    "category": "fruits",
+    "km": "ត្រសក់ស្រូវ"
+  },
+  "Vitis vinifera": {
+    "id": "grape",
+    "en": "Grape",
+    "km": "ទំពាំងបាយជូរ",
+    "category": "fruits"
+  },
+  "Malus domestica": {
+    "id": "apple",
+    "en": "Apple",
+    "km": "ប៉ោម",
+    "category": "fruits"
+  },
+  "Manilkara zapota": {
+    "id": "sapodilla",
+    "en": "Sapodilla",
+    "km": "ល្មុត",
+    "category": "fruits"
+  },
+  "Annona squamosa": {
+    "id": "custard-apple",
+    "en": "Custard apple",
+    "km": "ទៀប",
+    "category": "fruits"
+  },
+  "Annona muricata": {
+    "id": "soursop",
+    "en": "Soursop",
+    "km": "ទៀបបារាំង",
+    "category": "fruits"
+  },
+  "Averrhoa carambola": {
+    "id": "starfruit",
+    "en": "Starfruit",
+    "km": "ស្ពឺ",
+    "category": "fruits"
+  },
+  "Syzygium malaccense": {
+    "id": "malay-apple",
+    "en": "Malay rose apple",
+    "km": "ជម្ពូ",
+    "category": "fruits"
+  },
+  "Ziziphus mauritiana": {
+    "id": "jujube",
+    "en": "Indian jujube",
+    "km": "ពុទ្រា",
+    "category": "fruits"
+  },
+  "Cucumis sativus": {
+    "id": "cucumber",
+    "en": "Cucumber",
+    "km": "ត្រសក់",
+    "category": "vegetables"
+  },
+  "Cucurbita moschata": {
+    "id": "pumpkin",
+    "en": "Pumpkin",
+    "km": "ល្ពៅ",
+    "category": "vegetables"
+  },
+  "Benincasa hispida": {
+    "id": "wax-gourd",
+    "en": "Wax gourd",
+    "km": "ត្រឡាច",
+    "category": "vegetables"
+  },
+  "Momordica charantia": {
+    "id": "bitter-gourd",
+    "en": "Bitter gourd",
+    "km": "ម្រះ",
+    "category": "vegetables"
+  },
+  "Luffa cylindrica": {
+    "id": "sponge-gourd",
+    "en": "Sponge gourd",
+    "km": "ននោង",
+    "category": "vegetables"
+  },
+  "Lagenaria siceraria": {
+    "id": "bottle-gourd",
+    "en": "Bottle gourd",
+    "km": "ឃ្លោក",
+    "category": "vegetables"
+  },
+  "Lycopersicon esculentum": {
+    "id": "tomato",
+    "en": "Tomato",
+    "km": "ប៉េងប៉ោះ",
+    "category": "vegetables"
+  },
+  "Capsicum annuum": {
+    "id": "chilli",
+    "en": "Chilli / sweet pepper",
+    "km": "ម្ទេស",
+    "category": "vegetables"
+  },
+  "Capsicum frutescens": {
+    "id": "bird-chilli",
+    "en": "Bird's eye chilli",
+    "km": "ម្ទេសអាចម៍សត្វ",
+    "category": "vegetables"
+  },
+  "Solanum melongena": {
+    "id": "eggplant",
+    "en": "Eggplant",
+    "km": "ត្រប់",
+    "category": "vegetables"
+  },
+  "Abelmoschus esculentus": {
+    "id": "okra",
+    "en": "Okra",
+    "category": "vegetables"
+  },
+  "Allium cepa": {
+    "id": "onion",
+    "en": "Onion",
+    "km": "ខ្ទឹមបារាំង",
+    "category": "vegetables"
+  },
+  "Allium sativum": {
+    "id": "garlic",
+    "en": "Garlic",
+    "km": "ខ្ទឹមស",
+    "category": "vegetables"
+  },
+  "Brassica oleracea var. capitata": {
+    "id": "cabbage",
+    "en": "Cabbage",
+    "km": "ស្ពៃក្ដោប",
+    "category": "vegetables"
+  },
+  "Brassica juncea": {
+    "id": "mustard-greens",
+    "en": "Mustard greens",
+    "km": "ស្ពៃខៀវ",
+    "category": "vegetables"
+  },
+  "Brassica chinensis": {
+    "id": "pak-choi",
+    "en": "Pak choi",
+    "km": "ស្ពៃ",
+    "category": "vegetables"
+  },
+  "Ipomoea aquatica": {
+    "id": "water-spinach",
+    "en": "Water spinach (morning glory)",
+    "km": "ត្រកួន",
+    "category": "vegetables"
+  },
+  "Lactuca sativa var. capitata": {
+    "id": "lettuce",
+    "en": "Lettuce",
+    "km": "សាឡាដ",
+    "category": "vegetables"
+  },
+  "Daucus carota": {
+    "id": "carrot",
+    "en": "Carrot",
+    "km": "ការ៉ុត",
+    "category": "vegetables"
+  },
+  "Raphanus sativus": {
+    "id": "radish",
+    "en": "Radish",
+    "km": "ឆៃថាវ",
+    "category": "vegetables"
+  },
+  "Spinacia oleracea": {
+    "id": "spinach",
+    "en": "Spinach",
+    "category": "vegetables"
+  },
+  "Amaranthus tricolor": {
+    "id": "amaranth",
+    "en": "Amaranth greens",
+    "km": "ផ្ទី",
+    "category": "vegetables"
+  },
+  "Ocimum basilicum": {
+    "id": "basil",
+    "en": "Basil",
+    "km": "ជីរនាងវង",
+    "category": "vegetables"
+  },
+  "Coriandrum sativum": {
+    "id": "coriander",
+    "en": "Coriander",
+    "km": "ជីវ៉ាន់ស៊ុយ",
+    "category": "vegetables"
+  },
+  "Moringa oleifera": {
+    "id": "moringa",
+    "en": "Moringa",
+    "km": "ម្រុំ",
+    "category": "vegetables"
+  },
+  "Sechium edule": {
+    "id": "chayote",
+    "en": "Chayote",
+    "category": "vegetables"
+  },
+  "Nelumbo nucifera": {
+    "id": "lotus",
+    "en": "Lotus",
+    "km": "ឈូក",
+    "category": "vegetables"
+  },
+  "Citrus reticulata": {
+    "id": "mandarin",
+    "en": "Mandarin orange",
+    "category": "fruits",
+    "km": "ក្រូចខ្វិច"
+  },
+  "Brassica oleracea var. botrytis": {
+    "id": "cauliflower",
+    "en": "Cauliflower",
+    "km": "ផ្កាខាត់ណា",
+    "category": "vegetables"
+  },
+  "Brassica oleracea var. italica": {
+    "id": "broccoli",
+    "en": "Broccoli",
+    "category": "vegetables",
+    "km": "ផ្កាខាត់ណាខៀវ"
+  },
+  "Luffa acutangula": {
+    "id": "ridged-gourd",
+    "en": "Ridged gourd",
+    "category": "vegetables",
+    "km": "ននោងជ្រុង"
+  }
+}

@@ -1,0 +1,100 @@
+// Inlines MapLibre GL JS, the bundled world outline and src/map/web/map-app.js
+// into one HTML string, written to src/map/generated/mapHtml.ts. The WebView
+// loads it from memory, so the globe itself renders without a network connection.
+//
+// MapLibre 6 ships as ES modules with a separate worker file, so both are bundled
+// with esbuild into plain scripts; the worker is started from a Blob URL.
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { buildSync } from 'esbuild';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+
+const safeScript = (s) => s.replace(/<\/script/gi, '<\\/script');
+
+function bundle(contents, resolveDir) {
+  const out = buildSync({
+    stdin: { contents, resolveDir, loader: 'js' },
+    bundle: true,
+    format: 'iife',
+    minify: true,
+    target: 'es2020',
+    write: false,
+    legalComments: 'inline',
+  });
+  return out.outputFiles[0].text;
+}
+
+export function buildMapHtml() {
+  const maplibreDir = dirname(require.resolve('maplibre-gl/package.json'));
+  const dist = join(maplibreDir, 'dist');
+  const workerJs = bundle(readFileSync(join(dist, 'maplibre-gl-worker.mjs'), 'utf8'), dist);
+  const maplibreJs =
+    bundle("import * as maplibregl from './maplibre-gl.mjs'; window.maplibregl = maplibregl;", dist) +
+    `\nwindow.maplibregl.setWorkerUrl(URL.createObjectURL(new Blob([${JSON.stringify(workerJs)}], { type: 'text/javascript' })));`;
+  const maplibreCss = readFileSync(join(maplibreDir, 'dist/maplibre-gl.css'), 'utf8');
+  const world = readFileSync(join(root, 'src/map/web/world-110m.json'), 'utf8').trim();
+  const places = readFileSync(join(root, 'src/map/web/places.json'), 'utf8').trim();
+  const app = readFileSync(join(root, 'src/map/web/map-app.js'), 'utf8');
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>${maplibreCss}
+html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #04121c; overflow: hidden; }
+.seg-label { background: rgba(255,255,255,0.92); color: #1b3a24; font: 600 12px/1.2 system-ui, sans-serif;
+  padding: 2px 6px; border-radius: 10px; border: 1px solid #1b5e20; white-space: nowrap; pointer-events: none; }
+.zone-label { color: #fff; font: 800 12px/1 system-ui, sans-serif; pointer-events: none;
+  text-shadow: 0 0 2px #000, 0 0 4px rgba(0,0,0,0.8); }
+.zone-label-on { font-size: 15px; }
+.user-dot { width: 18px; height: 18px; border-radius: 50%; background: #1e88e5; border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(30,136,229,0.4); }
+.places { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.pl { position: absolute; left: 0; top: 0; white-space: nowrap; color: #fff; font-family: system-ui, 'Noto Sans Khmer', 'Khmer OS', sans-serif;
+  text-shadow: 0 0 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.75), 0 1px 3px rgba(0,0,0,0.6); }
+.pl-country { font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fffbe8; }
+.pl-province { font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #ffe6a8; }
+.pl-km { letter-spacing: 0; text-transform: none; font-size: 1.08em; }
+.pl-capital, .pl-city, .pl-town { padding-left: 12px; }
+.pl-capital::before, .pl-city::before, .pl-town::before { content: ''; position: absolute; left: 0; top: 50%; margin-top: -4px;
+  width: 6px; height: 6px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,0.7); }
+.pl-capital { font-size: 13.5px; font-weight: 800; }
+.pl-capital::before { width: 7px; height: 7px; margin-top: -5px; background: #fff; border: 2px solid #c62828; }
+.pl-city { font-size: 13px; font-weight: 700; }
+.pl-town { font-size: 12px; font-weight: 600; }
+.maplibregl-ctrl-group button { width: 44px; height: 44px; }
+.maplibregl-ctrl-group { border-radius: 14px !important; overflow: hidden;
+  box-shadow: 0 2px 6px rgba(8,20,14,0.18), 0 8px 24px rgba(8,20,14,0.14) !important; }
+.maplibregl-ctrl-top-right .maplibregl-ctrl { margin: 12px 12px 0 0; }
+.maplibregl-ctrl-attrib.maplibregl-compact { border-radius: 12px; }
+.maplibregl-ctrl-scale { border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>${safeScript(maplibreJs)}</script>
+<script>window.__WORLD__ = ${safeScript(world)};</script>
+<script>window.__PLACES__ = ${safeScript(places)};</script>
+<script>${safeScript(app)}</script>
+</body>
+</html>
+`;
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const html = buildMapHtml();
+  const outDir = join(root, 'src/map/generated');
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(
+    join(outDir, 'mapHtml.ts'),
+    '// Generated by scripts/build-map-html.mjs. Do not edit; run `npm run build:map`.\n' +
+      `export const MAP_HTML: string = ${JSON.stringify(html)};\n`,
+  );
+  console.log(`map html: ${(html.length / 1024).toFixed(0)} KiB`);
+}
