@@ -122,7 +122,7 @@ export interface ZoneData {
   zones: Zone[];
 }
 
-/** The farmer's own soil and water test. Where a value is given it replaces the soil maps. */
+/** The farmer's own soil and water test: the only soil data the app uses. */
 export interface SoilTest {
   ph: number | null;
   /** Organic matter, % (lab reports or test kits; organic carbon × 1.724). */
@@ -143,11 +143,16 @@ export interface EnvSummary {
   createdAt: string;
   climate: Section<ClimateData>;
   rainHistory: Section<RainHistory>;
-  soil: Section<SoilData>;
+  /**
+   * Predicted soil (SoilGrids). No longer fetched or shown: the app only uses the farmer's
+   * own soil test. Kept so analyses saved earlier still load.
+   */
+  soil?: Section<SoilData>;
   terrain: Section<TerrainData>;
   landCover: Section<LandCoverData>;
-  /** Added after the first release; absent in analyses saved before then. */
+  /** FAO soil map. No longer fetched or shown (see `soil`); kept so older analyses still load. */
   hwsd?: Section<HwsdData>;
+  /** Added after the first release; absent in analyses saved before then. */
   production?: Section<LocalProductionData>;
   zones?: Section<ZoneData>;
   /** The farmer's own soil and water test, kept across re-analyses. */

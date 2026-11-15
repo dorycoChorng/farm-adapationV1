@@ -149,13 +149,17 @@ export const envEn = {
   'crops.limitedByShort': 'Mainly limited by {factor}.',
   'crops.allOptimal': 'All assessed conditions are in the crop’s preferred range.',
   'crops.notAssessed': 'not assessed (no data)',
+  'crops.phNotTested': 'not counted: no soil test yet',
+  'crops.noPh':
+    'These scores use rain and temperature only, not soil pH. For a more precise result, test your soil pH and enter it on the analysis screen under Soil → My soil test.',
+  'crops.withPh': 'Scores include your soil test (pH {ph}).',
   'crops.rangeLegend': 'Light band: range the crop tolerates. Dark band: preferred range. Marker: this place.',
   'crops.crop': 'Crop',
   'crops.overall': 'Score',
   'crops.compareNote': 'Each cell is 0–100 for one condition. The overall score is the lowest of them, because the weakest condition limits the crop.',
   'crops.methodTitle': 'How the score works',
   'crops.method':
-    'For each sowing month, the app adds up the average rain and averages the temperature over the crop’s growing months, then compares them, and the soil pH, with the crop’s ECOCROP ranges. Each condition scores 100 inside the preferred range and falls in a straight line to 0 at the edge of what the crop tolerates. A month’s score is its lowest condition (the limiting factor), and the crop’s score is its best month, as in the ECOCROP model (Hijmans, R package Recocrop). Conditions with no data are left out and lower the confidence.',
+    'For each sowing month, the app adds up the average rain and averages the temperature over the crop’s growing months, then compares them with the crop’s ECOCROP ranges. Soil pH is compared too once you enter your own soil test; without one it is left out. Each condition scores 100 inside the preferred range and falls in a straight line to 0 at the edge of what the crop tolerates. A month’s score is its lowest condition (the limiting factor), and the crop’s score is its best month, as in the ECOCROP model (Hijmans, R package Recocrop). Missing rain or temperature data lowers the confidence.',
   'env.unitSolar': 'kWh/m²/day',
   'crops.profileSource': 'Crop ranges: FAO ECOCROP database (2023 export, from the ecocrop 0.2.0 package). English crop names: ECOCROP, via the R package dismo.',
 

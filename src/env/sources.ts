@@ -97,3 +97,6 @@ export const LAND_COVER_CLASSES: Record<number, { key: string; color: string }> 
 
 /** Analyses older than this get a "data may be out of date" warning. */
 export const STALE_AFTER_DAYS = 180;
+
+/** Sources a new analysis reads. Soil maps are no longer used: soil comes only from the farmer's own test. */
+export const USED_SOURCES: SourceInfo[] = Object.values(SOURCES).filter((s) => s.id !== 'soilgrids' && s.id !== 'hwsd');

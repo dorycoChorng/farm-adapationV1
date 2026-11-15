@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import type { TranslationKey } from '../../i18n/en';
 import { colors, radius, spacing, type } from '../../theme/colors';
 import { Button, Card, Chip, InfoRow } from '../ui';
+import { PhScale } from './charts';
 
 const TEXTURES: NonNullable<SoilTest['texture']>[] = ['sandy', 'loam', 'clay'];
 
@@ -20,9 +21,9 @@ const parse = (text: string): number | null | undefined => {
 const inRange = (v: number | null | undefined, lo: number, hi: number) => v === null || (v !== undefined && v >= lo && v <= hi);
 
 /**
- * "My soil test": the farmer types in what a soil or water test showed. Every value is
- * optional; the ones given replace the soil maps in the fixes, the salt check and the crop
- * scores. `onSave(null)` removes the test.
+ * "My soil test": the farmer types in what a soil or water test showed. This is the only
+ * soil data the app uses: the fixes, the salt check and the crop scores read it. Every
+ * value is optional. `onSave(null)` removes the test.
  */
 export function SoilTestCard({ test, onSave, disabled }: { test: SoilTest | undefined; onSave: (test: SoilTest | null) => void; disabled?: boolean }) {
   const { t } = useI18n();
@@ -82,7 +83,12 @@ export function SoilTestCard({ test, onSave, disabled }: { test: SoilTest | unde
       ) : test ? (
         <>
           <Text style={[type.small, { marginBottom: spacing.xs }]}>{t('test.used')}</Text>
-          {test.ph != null ? <InfoRow label={t('test.ph')} value={String(test.ph)} /> : null}
+          {test.ph != null ? (
+            <>
+              <InfoRow label={t('test.ph')} value={String(test.ph)} />
+              <PhScale value={test.ph} low={null} high={null} />
+            </>
+          ) : null}
           {test.organicMatterPct != null ? <InfoRow label={t('test.om')} value={`${test.organicMatterPct} %`} /> : null}
           {test.waterEcDsM != null ? <InfoRow label={t('test.ec')} value={`${test.waterEcDsM} dS/m`} /> : null}
           {test.texture ? <InfoRow label={t('test.texture')} value={t(`test.texture.${test.texture}` as TranslationKey)} /> : null}

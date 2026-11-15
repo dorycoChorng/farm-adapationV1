@@ -419,15 +419,8 @@ function summaryWith(over: Partial<{ rain: number | null; temp: number | null; p
             },
           },
     rainHistory: { status: 'no-data', source: 'nasa-power', fetchedAt: at, reason: 'test' },
-    soil:
-      v.ph === null
-        ? { status: 'no-data', source: 'soilgrids', fetchedAt: at, reason: 'test' }
-        : {
-            status: 'ok',
-            source: 'soilgrids',
-            fetchedAt: at,
-            data: { depth: '0–30 cm', textureClass: null, properties: [{ key: 'phh2o', mean: v.ph, low: null, high: null, unit: 'pH' }] },
-          },
+    // pH comes only from the farmer's own soil test.
+    ...(v.ph === null ? {} : { soilTest: { ph: v.ph, organicMatterPct: null, waterEcDsM: null, texture: null, enteredAt: at } }),
     terrain:
       v.slope === null
         ? { status: 'error', source: 'aws-terrain', fetchedAt: at, reason: 'test' }
@@ -455,11 +448,13 @@ describe('crop suitability', () => {
     expect(res.factors.find((f) => f.key === 'rain')?.position).toBe('low');
   });
 
-  it('marks missing data as not assessed and lowers confidence', () => {
+  it('scores on rain and temperature when there is no soil pH test', () => {
     const res = scoreCrop(crop, annualSite(900, 27, null));
     expect(res.score).toBe(100);
     expect(res.limiting).toBeNull();
-    expect(res.confidence).toBe('low');
+    // A missing pH test doesn't lower confidence; missing climate data does.
+    expect(res.confidence).toBe('medium');
+    expect(scoreCrop(crop, annualSite(900, null, 6)).confidence).toBe('low');
     expect(res.factors.find((f) => f.key === 'ph')?.position).toBe('missing');
     // With fewer than two factors there is no overall score at all.
     expect(scoreCrop(crop, annualSite(null, null, 6)).score).toBeNull();
@@ -862,7 +857,6 @@ describe('analyzeLocation', () => {
     const fetchJson: FetchJson = async (url) => {
       if (url.includes('/climatology/')) return powerClimatology;
       if (url.includes('/monthly/')) throw new Error('HTTP 503');
-      if (url.includes('soilgrids')) return soilResponse;
       throw new Error(`unexpected ${url}`);
     };
     const fetchRange: FetchRange = async () => {
@@ -872,16 +866,16 @@ describe('analyzeLocation', () => {
     const s = await analyzeLocation({ latitude: 11.5, longitude: 104.9 }, null, { fetchJson, fetchRange, now, onSection: (k) => seen.push(k) });
     expect(s.climate.status).toBe('ok');
     expect(s.rainHistory).toMatchObject({ status: 'error', reason: 'HTTP 503' });
-    expect(s.soil.status).toBe('ok');
+    // Soil is not predicted any more: only the farmer's own test is used.
+    expect(s.soil).toBeUndefined();
+    expect(s.hwsd).toBeUndefined();
     expect(s.terrain).toMatchObject({ status: 'error', reason: 'offline' });
     expect(s.landCover).toMatchObject({ status: 'error', reason: 'offline' });
     expect(s.createdAt).toBe('2026-10-18T00:00:00.000Z');
-    // HWSD is bundled, so it answers offline.
-    expect(s.hwsd).toMatchObject({ status: 'ok', source: 'hwsd' });
     // Crops grown nearby are bundled for Cambodia too.
     expect(s.production).toMatchObject({ status: 'ok', source: 'gaez' });
     expect(s.zones).toMatchObject({ status: 'error', reason: 'offline' });
-    expect(seen.sort()).toEqual(['climate', 'hwsd', 'landCover', 'production', 'rainHistory', 'soil', 'terrain', 'zones']);
+    expect(seen.sort()).toEqual(['climate', 'landCover', 'production', 'rainHistory', 'terrain', 'zones']);
   });
 
   it('requests the last ten complete years of rainfall', async () => {
@@ -898,64 +892,5 @@ describe('analyzeLocation', () => {
     });
     const monthlyUrl = new URL(urls.find((u) => u.includes('/monthly/'))!);
     expect([monthlyUrl.searchParams.get('start'), monthlyUrl.searchParams.get('end')]).toEqual(['2016', '2025']);
-  });
-
-  it('treats an all-empty soil response as no data', async () => {
-    const empty = { properties: { layers: soilResponse.properties.layers.map((l) => layer(l.name, 10, [null, null, null])) } };
-    const s = await analyzeLocation({ latitude: 0, longitude: 0 }, null, {
-      fetchJson: async (u) => (u.includes('soilgrids') ? empty : Promise.reject(new Error('x'))),
-      fetchRange: async () => {
-        throw new Error('x');
-      },
-      now,
-    });
-    expect(s.soil.status).toBe('no-data');
-  });
-
-  // ISRIC's map service answers each layer with a one-pixel GeoTIFF around the point.
-  const soilMapFiles = (p: { latitude: number; longitude: number }, value: (coverage: string) => number): FetchRange => async (url) => {
-    if (!url.startsWith('https://maps.isric.org/')) throw new Error('offline');
-    const coverage = new URL(url).searchParams.get('COVERAGEID')!;
-    const geo = { originX: p.longitude - 0.001, originY: p.latitude + 0.001, size: 0.002 };
-    return buildTiff({ width: 1, height: 1, tile: 16, bits: 16, signed: true, compress: true, geo, pixels: () => value(coverage) });
-  };
-  const restDown: FetchJson = async (u) => {
-    if (u.includes('soilgrids')) throw new HttpError(503, null);
-    throw new Error('x');
-  };
-
-  it('reads soil from the SoilGrids map service when the REST API is down', async () => {
-    const p = { latitude: 11.55, longitude: 104.92 };
-    const mapped: Record<string, number> = { phh2o: 55, soc: 150, clay: 300, sand: 300, silt: 400, nitrogen: 120, cec: 100 };
-    const s = await analyzeLocation(p, null, {
-      fetchJson: restDown,
-      fetchRange: soilMapFiles(p, (c) => mapped[c.split('_')[0]]),
-      sleep: async () => {},
-      now,
-    });
-    expect(s.soil.status).toBe('ok');
-    if (s.soil.status !== 'ok') return;
-    const prop = (k: string) => s.soil.status === 'ok' && s.soil.data.properties.find((x) => x.key === k);
-    expect(prop('phh2o')).toMatchObject({ mean: 5.5, low: null, high: null, unit: 'pH' });
-    expect(prop('nitrogen')).toMatchObject({ mean: 1.2 });
-    expect(s.soil.data.textureClass).toBe('clay-loam');
-  });
-
-  it.each([0, -32768])('treats SoilGrids map gaps (%i, e.g. open sea) as no data', async (gap) => {
-    const p = { latitude: 5, longitude: 100 };
-    const s = await analyzeLocation(p, null, { fetchJson: restDown, fetchRange: soilMapFiles(p, () => gap), sleep: async () => {}, now });
-    expect(s.soil.status).toBe('no-data');
-  });
-
-  it('reports an error, not "no data", when both soil services fail', async () => {
-    const s = await analyzeLocation({ latitude: 1, longitude: 2 }, null, {
-      fetchJson: restDown,
-      fetchRange: async () => {
-        throw new Error('offline');
-      },
-      sleep: async () => {},
-      now,
-    });
-    expect(s.soil).toMatchObject({ status: 'error', reason: 'offline' });
   });
 });

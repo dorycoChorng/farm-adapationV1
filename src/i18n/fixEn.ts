@@ -1,7 +1,7 @@
 /** English strings for the salt-water check and the soil fixes. */
 export const fixEn = {
   'test.title': 'My soil test',
-  'test.intro': 'Have you tested your soil or water? Enter the results and the app will use them instead of the soil maps.',
+  'test.intro': 'The app does not guess your soil. Enter the results of a soil or water test, and the crop scores, the land fixes and the salt check will use them.',
   'test.where': 'Your local agriculture office can test soil. A pH test kit and a water EC meter each cost a few dollars.',
   'test.add': 'Enter my soil test',
   'test.edit': 'Edit',
@@ -19,7 +19,7 @@ export const fixEn = {
   'test.texture.loam': 'Loamy (crumbly)',
   'test.texture.clay': 'Clay (sticky)',
   'test.invalid': 'Check the numbers: pH 3–10, organic matter 0–30 %, EC 0–50 dS/m. Leave a box empty if you did not test it.',
-  'test.used': 'The app uses these results instead of the soil maps.',
+  'test.used': 'The app uses these results for the crop scores, the land fixes and the salt check.',
   'test.savedOn': 'Entered {date}',
   'fix.measured': 'From your test',
   'fix.p.sandy.whyTest': 'Your soil feels sandy: water and fertiliser drain through quickly.',
@@ -33,13 +33,14 @@ export const fixEn = {
   'fix.notSuitableTitle': 'This land needs work before planting',
   'fix.notSuitableBody': 'Here is what holds it back and what you can do about it, most important first.',
   'fix.okBody': 'The land can be farmed. These steps would make it better, most important first.',
-  'fix.none': 'The soil maps show no big problems. Keep adding compost or manure each season to keep it that way.',
+  'fix.none': 'No big problems found. Keep adding compost or manure each season to keep the soil good.',
+  'fix.noTest': 'Soil not checked: add your soil test above to get advice on pH, organic matter and texture.',
   'fix.severity.blocker': 'Fix first',
   'fix.severity.major': 'Important',
   'fix.severity.minor': 'Worth doing',
   'fix.crops': 'Crops that cope with this: {list}',
   'fix.testFirst':
-    'Soil maps are estimates for a wide area. Get a soil test (pH, organic matter, salt) from your local agriculture office before buying lime, gypsum or fertiliser.',
+    'Soil advice comes only from your own test. Your local agriculture office can test pH, organic matter and salt; do this before buying lime, gypsum or fertiliser.',
 
   'fix.p.very-acid.title': 'Very acid soil',
   'fix.p.very-acid.why': 'pH {v}. Below 5, most crops cannot take up nutrients, and aluminium in the soil harms their roots.',
@@ -81,6 +82,10 @@ export const fixEn = {
   'fix.p.steep.why': 'Slope {v}°. Rain washes the topsoil away.',
   'fix.p.steep.steps':
     'Plant along the contour, never up and down the slope.\nBuild terraces, or keep grass strips (such as vetiver) across the slope.\nKeep the soil covered with mulch or a cover crop.\nTree crops and other perennials hold the soil best.',
+  'fix.p.high-ground.title': 'High ground',
+  'fix.p.high-ground.why': 'About {v} m above sea level. It is cooler here than in the lowlands (about 0.6 °C less for every 100 m), so crops grow more slowly.',
+  'fix.p.high-ground.steps':
+    'Choose crops that like cooler weather, such as tea, coffee, potato, cabbage and carrot.\nExpect lowland crops like rice and maize to take longer to ripen; pick early-ripening varieties.\nThe crop scores already use the cooler temperature here, so trust them over lowland advice.',
   'fix.p.low-spots.title': 'Low, wet spots',
   'fix.p.low-spots.why': '{v}% of the land is low or wet, where water collects after rain.',
   'fix.p.low-spots.steps':

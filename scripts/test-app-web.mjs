@@ -407,25 +407,6 @@ const monthlyFixture = (start, end) => {
   for (let y = start; y <= end; y++) for (let m = 1; m <= 12; m++) values[`${y}${String(m).padStart(2, '0')}`] = 4 + (y % 3);
   return { properties: { parameter: { PRECTOTCORR: values } }, parameters: { PRECTOTCORR: { units: 'mm/day' } } };
 };
-const soilLayer = (name, d, v) => ({
-  name,
-  unit_measure: { d_factor: d },
-  depths: ['0-5cm', '5-15cm', '15-30cm'].map((label) => ({ label, values: { mean: v, 'Q0.05': v - 5, 'Q0.95': v + 5 } })),
-});
-const soilFixture = {
-  properties: {
-    layers: [
-      soilLayer('phh2o', 10, 58),
-      soilLayer('soc', 10, 120),
-      soilLayer('clay', 10, 250),
-      soilLayer('sand', 10, 400),
-      soilLayer('silt', 10, 350),
-      soilLayer('nitrogen', 100, 110),
-      soilLayer('cec', 10, 90),
-    ],
-  },
-};
-
 async function routeEnvFixtures(context) {
   const json = (route, body) =>
     route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
@@ -434,12 +415,6 @@ async function routeEnvFixtures(context) {
     const u = new URL(r.request().url());
     return json(r, monthlyFixture(Number(u.searchParams.get('start')), Number(u.searchParams.get('end'))));
   });
-  // The web build reads SoilGrids through the site's /soilgrids/ proxy. The first request
-  // gets a "busy" answer, as the real API often gives, to check the app retries.
-  let soilCalls = 0;
-  await context.route(/\/soilgrids\/soilgrids\/v2\.0\/properties\/query/, (r) =>
-    ++soilCalls === 1 ? r.fulfill({ status: 503, body: 'busy' }) : json(r, soilFixture),
-  );
 }
 
 describe('environmental analysis and crop suitability', () => {
@@ -463,11 +438,12 @@ describe('environmental analysis and crop suitability', () => {
     await page.getByTestId('card-rainfall').getByText('NASA POWER', { exact: true }).waitFor();
     await page.getByTestId('card-rainfall').getByText('Average 2001–2020').waitFor();
 
-    // Soil tab: modelled pH with the "not a measurement" caveat.
+    // Soil tab: no predicted soil, only the farmer's own test.
     await page.getByRole('tab', { name: 'Soil' }).click();
-    await page.getByTestId('card-soil').getByText(/^5\.8 pH/).waitFor();
-    await page.getByText(/not a test of your field/).waitFor();
-    await page.getByText('Loam', { exact: true }).waitFor();
+    await page.getByTestId('card-soil-test').getByText(/does not guess your soil/).waitFor();
+    await page.getByTestId('fix-no-test').waitFor();
+    assert.equal(await page.getByTestId('card-soil').count(), 0);
+    assert.equal(await page.getByTestId('card-hwsd').count(), 0);
     await shot(page, 'analysis-soil');
 
     // Seasons come from the monthly averages: with this synthetic rain, May–November are wet (≥ 100 mm).
@@ -497,15 +473,6 @@ describe('environmental analysis and crop suitability', () => {
     await zones.getByTestId('zone-detail').getByText('Zone 1', { exact: false }).waitFor();
     assert.equal(await zoneMap.evaluate(() => document.querySelectorAll('.zone-label-on').length), 1);
     await shot(page, 'analysis-land');
-
-    // Second soil source: FAO's soil map, bundled for Cambodia, compared with SoilGrids.
-    // (At the country's label point HWSD v2 maps Gleysols, pH 5.9; the SoilGrids fixture says 5.8.)
-    await page.getByRole('tab', { name: 'Soil' }).click();
-    await page.getByTestId('card-hwsd').getByText(/Main soil of this map unit: Gleysols/).waitFor();
-    await page.getByTestId('card-hwsd').getByText('Very poorly drained').waitFor();
-    await page.getByTestId('card-soil-compare').getByText('Soil pH: SoilGrids 5.8, FAO soil map 5.9.').waitFor();
-    await page.getByTestId('card-soil-compare').getByText(/They agree closely/).waitFor();
-    await shot(page, 'analysis-soil2');
 
     // Farming: crops grown around the place (real FAO GAEZ cell through the site's proxy),
     // the country's farm economy (bundled), and another country picked by search.
@@ -677,23 +644,22 @@ describe('environmental analysis and crop suitability', () => {
   it('shows each result as soon as it arrives, without waiting for slow sources', async () => {
     const { page, context, errors } = await openApp();
     await routeEnvFixtures(context);
-    // Hold SoilGrids (often the slowest source) until the rest is on screen.
+    // Hold the land-cover files until the rest is on screen.
     let release;
     const held = new Promise((r) => (release = r));
-    await page.route(/\/soilgrids\/soilgrids\/v2\.0\/properties\/query/, async (r) => {
+    await page.route(/\/worldcover\//, async (r) => {
       await held;
-      await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(soilFixture) });
+      await r.fallback();
     });
     await button(page, 'Go to Cambodia').click();
     await page.getByTestId('analyse').click();
     await page.getByTestId('run-analysis').click();
     await page.getByTestId('card-rainfall').getByText(/mm/).first().waitFor({ timeout: 30000 });
-    await page.getByRole('tab', { name: 'Soil' }).click();
-    await page.getByTestId('card-soil-loading').waitFor();
-    await page.getByTestId('card-hwsd').getByText(/Main soil of this map unit/).waitFor();
+    await page.getByRole('tab', { name: 'Land' }).click();
+    await page.getByTestId('card-landcover-loading').waitFor();
     await shot(page, 'analysis-progressive');
     release();
-    await page.getByTestId('card-soil').getByText(/^5\.8 pH/).waitFor({ timeout: 30000 });
+    await page.getByTestId('card-landcover').getByText(/points sampled|selected point/).first().waitFor({ timeout: 30000 });
     await page.getByTestId('to-crops').waitFor({ timeout: 60000 });
     assert.deepEqual(errors, []);
     await context.close();

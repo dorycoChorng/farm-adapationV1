@@ -76,21 +76,30 @@ export function loadCropPhoto(crop: Pick<CropProfile, 'id' | 'scientific' | 'en'
   return p;
 }
 
-/** The small photo on a crop card; tap it to open the zoomable viewer. */
-export function CropPhoto({ crop, size = 76 }: { crop: CropProfile; size?: number }) {
+/**
+ * The photo of a crop; tap it to open the zoomable viewer. `hideIfMissing` leaves no empty
+ * box behind when no photo is found (used in the crop screen's header).
+ */
+export function CropPhoto({ crop, size = 76, hideIfMissing = false }: { crop: CropProfile; size?: number; hideIfMissing?: boolean }) {
   const { t, language } = useI18n();
   const [photo, setPhoto] = useState<Photo | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let live = true;
-    loadCropPhoto(crop).then((p) => live && setPhoto(p));
+    setLoaded(false);
+    loadCropPhoto(crop).then((p) => {
+      if (!live) return;
+      setPhoto(p);
+      setLoaded(true);
+    });
     return () => {
       live = false;
     };
   }, [crop]);
 
-  if (!photo) return <View style={[st.thumb, { width: size, height: size }]} />;
+  if (!photo) return hideIfMissing && loaded ? null : <View style={[st.thumb, { width: size, height: size }]} />;
   const name = cropName(crop, language);
   return (
     <>
