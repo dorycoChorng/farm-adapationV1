@@ -158,6 +158,8 @@ npm install --save-dev sql.js @types/sql.js playwright-core @types/node esbuild 
 
 Every push is deployed by Vercel as a web preview (`vercel.json` builds `expo export --platform web`). The link appears in the pull request. The web version runs the same screens, map, measuring and storage code; GPS comes from the browser's location permission, so a phone browser works best.
 
+**Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them. For the plant scan, add `PLANTNET_API_KEY` under Settings → Environment Variables.
+
 ## Run on Android
 
 ```bash
