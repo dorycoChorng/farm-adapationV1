@@ -1,0 +1,40 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npx expo export --platform web --output-dir dist",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/worldcover/:path*",
+      "destination": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/:path*"
+    },
+    {
+      "source": "/soilgrids/:path*",
+      "destination": "https://rest.isric.org/:path*"
+    },
+    {
+      "source": "/gaez/:path*",
+      "destination": "https://storage.googleapis.com/fao-gismgr-gaez-v5-data/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
+        }
+      ]
+    }
+  ]
+}
