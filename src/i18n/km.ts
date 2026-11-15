@@ -1,3 +1,4 @@
+import { fixKm } from './fixKm';
 import { envKm } from './envKm';
 import { farmKm } from './farmKm';
 import type { TranslationKey } from './en';
@@ -166,4 +167,5 @@ export const km: Record<TranslationKey, string> = {
   'offline.language': 'ភាសា',
   ...envKm,
   ...farmKm,
+  ...fixKm,
 };
