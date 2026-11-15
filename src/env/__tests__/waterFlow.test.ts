@@ -1,5 +1,6 @@
 import { nasademTileName } from '../planetary';
 import { flowLevel, flowModel, POND_M, waterFlowMap } from '../waterFlow';
+import { pathKind } from '../waterStyle';
 
 /** A valley sloping south, with sides rising east and west, and a 3 m pit in the middle. */
 function valley(cols = 9, rows = 9) {
@@ -59,5 +60,39 @@ describe('water flow', () => {
       expect(lat).toBeLessThanOrEqual(land[3]);
     }
     expect(map.pondShare).toBeGreaterThan(0);
+  });
+
+  it('draws connected water paths that run downhill and get bigger', () => {
+    const cols = 40;
+    const rows = 40;
+    const z = new Float32Array(cols * rows);
+    // A wide valley sloping south, so a stream forms down the middle.
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) z[r * cols + c] = Math.abs(c - 20) * 0.8 + (rows - r) * 0.5;
+    const s = 1 / 3600;
+    const lonEdges = Array.from({ length: cols + 1 }, (_, i) => 104 + i * s);
+    const latEdges = Array.from({ length: rows + 1 }, (_, i) => 11.5 - i * s);
+    const land: [number, number, number, number] = [104 + 5 * s, 11.5 - 38 * s, 104 + 35 * s, 11.5 - 5 * s];
+    const map = waterFlowMap({ cols, rows, lonEdges, latEdges, z, source: 'nasadem' }, land, null);
+    expect(map.paths.length).toBeGreaterThan(0);
+    expect(map.biggest).not.toBeNull();
+    for (const p of map.paths) {
+      expect(p.coords.length).toBeGreaterThanOrEqual(2);
+      // Water runs south (downhill), so each path ends no further north than it starts.
+      expect(p.coords[p.coords.length - 1][1]).toBeLessThanOrEqual(p.coords[0][1] + 1e-9);
+    }
+    // Where a path grows into a bigger kind, the bigger stretch starts where the smaller one ends.
+    const kinds = new Set(map.paths.map((p) => p.kind));
+    if (kinds.size > 1) {
+      const ends = new Set(map.paths.map((p) => p.coords[p.coords.length - 1].join(',')));
+      const bigStarts = map.paths.filter((p) => p.kind !== 'small').map((p) => p.coords[0].join(','));
+      expect(bigStarts.some((st) => ends.has(st))).toBe(true);
+    }
+  });
+
+  it('names path kinds from flow levels', () => {
+    expect(pathKind(1)).toBe('small');
+    expect(pathKind(2)).toBe('small');
+    expect(pathKind(3)).toBe('stream');
+    expect(pathKind(4)).toBe('main');
   });
 });

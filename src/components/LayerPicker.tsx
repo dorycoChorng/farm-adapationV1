@@ -2,6 +2,7 @@ import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text
 
 import { useI18n } from '../i18n';
 import { LAND_COVER_CLASSES } from '../env/sources';
+import { WATER_STYLE } from '../env/waterStyle';
 import type { TranslationKey } from '../i18n/en';
 import { CLIMATE_STOPS } from '../env/climateGrid';
 import { BASE_LAYERS, type BaseLayerId, LAND_COVER_OVERLAY, type OverlayId, PLANNED_LAYERS, SOIL_OVERLAY_LICENCE } from '../map/layers';
@@ -14,12 +15,12 @@ const BASE_ICONS: Record<BaseLayerId, IconName> = {
   outline: 'map-outline',
 };
 
-/** Same colours as the map page's water-flow tiles. */
+/** Same colours as the map page's water-flow tiles and the field view (WATER_STYLE). */
 const WATER_FLOW_LEGEND: [string, TranslationKey][] = [
-  ['#b3e0ff', 'layers.waterflowSmall'],
-  ['#1e7fd8', 'layers.waterflowStream'],
-  ['#0b4aa8', 'layers.waterflowRiver'],
-  ['#7e57c2', 'layers.waterflowPool'],
+  [WATER_STYLE.small.color, 'layers.waterflowSmall'],
+  [WATER_STYLE.stream.color, 'layers.waterflowStream'],
+  [WATER_STYLE.main.color, 'layers.waterflowRiver'],
+  [WATER_STYLE.pond.color, 'layers.waterflowPool'],
 ];
 
 /** ISRIC's own legend for the pH layer, so the colours always match the map. */
