@@ -6,13 +6,15 @@ const config = getDefaultConfig(__dirname);
 // expo-sqlite on web loads SQLite as WebAssembly.
 config.resolver.assetExts.push('wasm');
 
-// ESA WorldCover, SoilGrids and FAO GAEZ can't be read from a browser on another origin, so the
+// ESA WorldCover, SoilGrids, FAO GAEZ and Planetary Computer storage can't be read from a browser on another origin, so the
 // web build reads them through paths on its own origin (src/env/appFetch.ts).
 // vercel.json does this in production; this does it in development.
 const PROXIES = {
   '/worldcover/': 'https://esa-worldcover.s3.eu-central-1.amazonaws.com/',
   '/soilgrids/': 'https://rest.isric.org/',
   '/gaez/': 'https://storage.googleapis.com/fao-gismgr-gaez-v5-data/',
+  '/nasadem/': 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/',
+  '/pc-sas/': 'https://planetarycomputer.microsoft.com/api/sas/',
 };
 async function proxy(req, res, path) {
   try {

@@ -42,7 +42,7 @@ export function demPixel(p: LatLng, z = DEM_ZOOM): [number, number] {
 export const demCellSize = (latitude: number, z = DEM_ZOOM) =>
   (2 * Math.PI * EARTH_RADIUS * Math.cos((latitude * Math.PI) / 180)) / (DEM_TILE * 2 ** z);
 
-async function demAt(gx: number, gy: number, z: number, get: FetchRange) {
+export async function demAt(gx: number, gy: number, z: number, get: FetchRange) {
   const n = 2 ** z;
   const tx = Math.floor(gx / DEM_TILE);
   const ty = Math.floor(gy / DEM_TILE);
