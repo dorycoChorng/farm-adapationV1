@@ -31,6 +31,24 @@
     post({ type: 'error', message: String(message) });
   };
 
+  // Shown instead of a blank screen when MapLibre cannot start (no WebGL, blocked worker, old browser).
+  function showFailure(reason) {
+    post({ type: 'error', message: 'map failed to start: ' + reason });
+    var el = document.getElementById('map');
+    if (!el || document.getElementById('map-failed')) return;
+    var box = document.createElement('div');
+    box.id = 'map-failed';
+    box.style.cssText =
+      'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;' +
+      'text-align:center;color:#e8f1ea;font:500 15px/1.4 system-ui,sans-serif;background:#0b3d5c;z-index:2';
+    box.textContent =
+      'The map could not start in this browser. Try opening the page in Safari or Chrome. / ' +
+      'ផែនទីមិនអាចបើកក្នុងកម្មវិធីរុករកនេះបានទេ។ សូមបើកក្នុង Safari ឬ Chrome។';
+    el.appendChild(box);
+  }
+
+  var hasMapLibre = typeof window.maplibregl !== 'undefined';
+
   // ---------- geometry helpers (rendering only; measurements happen in RN) ----------
 
   function circlePolygon(center, radiusMeters, steps) {
@@ -251,7 +269,7 @@
     return emptyTile;
   }
 
-  maplibregl.addProtocol('farmlc', function (params, abortController) {
+  if (hasMapLibre) maplibregl.addProtocol('farmlc', function (params, abortController) {
     var parts = params.url.replace('farmlc://', '').split('/').map(Number);
     var requestId = nextTileRequest++;
     return new Promise(function (resolve, reject) {
@@ -596,6 +614,19 @@
   // ---------- command dispatch ----------
 
   function init(cfg) {
+    if (!hasMapLibre) {
+      showFailure('MapLibre did not load');
+      return;
+    }
+    try {
+      createMap(cfg);
+    } catch (err) {
+      map = null;
+      showFailure(String((err && err.message) || err));
+    }
+  }
+
+  function createMap(cfg) {
     config = cfg;
     map = new maplibregl.Map({
       container: 'map',
@@ -662,6 +693,10 @@
     if (!msg || !msg.type) return;
     if (msg.type === 'init') {
       if (!map) init(msg.config);
+      return;
+    }
+    if (msg.type === 'ping') {
+      if (!map && !document.getElementById('map-failed')) post({ type: 'ready' });
       return;
     }
     if (!map) return;
