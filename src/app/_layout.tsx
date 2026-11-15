@@ -5,10 +5,13 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { migrate } from '../db/migrations';
+import { startSpeedInsights } from '../insights/speedInsights';
 import { I18nProvider, useI18n } from '../i18n';
 import { MoneyProvider } from '../money/MoneyProvider';
 import { AppStateProvider } from '../state/AppState';
 import { colors, TOUCH_TARGET } from '../theme/colors';
+
+startSpeedInsights();
 
 function LanguageToggle() {
   const { language, setLanguage, t } = useI18n();
