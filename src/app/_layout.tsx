@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { migrate } from '../db/migrations';
@@ -10,6 +10,18 @@ import { I18nProvider, useI18n } from '../i18n';
 import { MoneyProvider } from '../money/MoneyProvider';
 import { AppStateProvider } from '../state/AppState';
 import { colors, TOUCH_TARGET } from '../theme/colors';
+
+// Import Vercel Analytics only for web platform
+let Analytics: React.ComponentType | null = null;
+if (Platform.OS === 'web') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Analytics: WebAnalytics } = require('@vercel/analytics/react');
+    Analytics = WebAnalytics;
+  } catch {
+    // Analytics package not available, continue without it
+  }
+}
 
 startSpeedInsights();
 
@@ -65,6 +77,7 @@ export default function RootLayout() {
             <AppStateProvider>
               <StatusBar style="dark" />
               <Screens />
+              {Analytics && <Analytics />}
             </AppStateProvider>
           </MoneyProvider>
         </I18nProvider>
