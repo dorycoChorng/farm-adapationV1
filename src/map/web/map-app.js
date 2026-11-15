@@ -95,6 +95,14 @@
       zones: { type: 'geojson', data: fc([]) },
       water: { type: 'geojson', data: fc([]), attribution: 'NASADEM (NASA/JPL) via Microsoft Planetary Computer' },
       ring: { type: 'geojson', data: fc([]) },
+      waterflow: {
+        type: 'raster',
+        tiles: ['farmflow://{z}/{x}/{y}'],
+        tileSize: 256,
+        minzoom: FLOW_MIN_ZOOM,
+        maxzoom: FLOW_MAX_ZOOM,
+        attribution: 'Water flow modelled from ' + cfg.terrain.attribution,
+      },
       landcover: {
         type: 'raster',
         tiles: ['farmlc://{z}/{x}/{y}'],
@@ -134,6 +142,14 @@
         minzoom: cfg.landCover.minzoom,
         layout: { visibility: 'none' },
         paint: { 'raster-opacity': 0.72, 'raster-resampling': 'nearest', 'raster-fade-duration': 0 },
+      },
+      {
+        id: 'waterflow',
+        type: 'raster',
+        source: 'waterflow',
+        minzoom: FLOW_MIN_ZOOM,
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.9, 'raster-fade-duration': 0 },
       },
       {
         id: 'boundaries',
@@ -317,6 +333,265 @@
       });
     });
   });
+
+  // ---------- water flow anywhere (worked out in the page from the terrain tiles) ----------
+  //
+  // For each map tile, the elevation of that tile and its eight neighbours (the same
+  // Terrarium tiles the terrain shading uses: SRTM and other elevation models) is read at
+  // half resolution, pits are filled (priority-flood), water is sent to the steepest
+  // downhill neighbour (D8) and the land draining through each cell is counted. Cells that
+  // carry water are drawn blue, darker as more land drains through them, and pits where
+  // water pools are drawn purple. Only nearby land is counted, so the biggest rivers look
+  // like smaller streams: this shows how water runs over the ground near you.
+
+  var FLOW_MIN_ZOOM = 10;
+  var FLOW_MAX_ZOOM = 14;
+  var FLOW_SHADES = [
+    [179, 224, 255, 150],
+    [95, 180, 242, 200],
+    [30, 127, 216, 235],
+    [11, 74, 168, 255],
+  ];
+  var POOL_RGBA = [126, 87, 194, 110];
+  var POOL_M = 1;
+  var demTiles = {};
+  var demOrder = [];
+  var demCanvas = null;
+
+  function terrainUrl(z, x, y) {
+    return config.terrain.tiles[0].replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  }
+
+  // One Terrarium tile as metres (256 × 256), or null where there is none.
+  function demTile(z, x, y) {
+    var n = Math.pow(2, z);
+    if (y < 0 || y >= n) return Promise.resolve(null);
+    x = ((x % n) + n) % n;
+    var key = z + '/' + x + '/' + y;
+    if (demTiles[key]) return demTiles[key];
+    var p = fetch(terrainUrl(z, x, y))
+      .then(function (r) {
+        return r.ok ? r.blob() : null;
+      })
+      .then(function (blob) {
+        return blob ? createImageBitmap(blob) : null;
+      })
+      .then(function (img) {
+        if (!img) return null;
+        if (!demCanvas) {
+          demCanvas = document.createElement('canvas');
+          demCanvas.width = 256;
+          demCanvas.height = 256;
+        }
+        var ctx = demCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, 256, 256);
+        ctx.drawImage(img, 0, 0, 256, 256);
+        var px = ctx.getImageData(0, 0, 256, 256).data;
+        var out = new Float32Array(256 * 256);
+        for (var i = 0; i < out.length; i++) out[i] = px[i * 4] * 256 + px[i * 4 + 1] + px[i * 4 + 2] / 256 - 32768;
+        return out;
+      })
+      .catch(function () {
+        delete demTiles[key];
+        return null;
+      });
+    demTiles[key] = p;
+    demOrder.push(key);
+    if (demOrder.length > 120) delete demTiles[demOrder.shift()];
+    return p;
+  }
+
+  // Binary min-heap of cell indexes keyed by filled elevation.
+  function flowHeap(key, capacity) {
+    var ids = new Int32Array(capacity);
+    var size = 0;
+    return {
+      size: function () {
+        return size;
+      },
+      push: function (i) {
+        var k = size++;
+        ids[k] = i;
+        while (k > 0) {
+          var p = (k - 1) >> 1;
+          if (key[ids[p]] <= key[ids[k]]) break;
+          var t = ids[p];
+          ids[p] = ids[k];
+          ids[k] = t;
+          k = p;
+        }
+      },
+      pop: function () {
+        var top = ids[0];
+        ids[0] = ids[--size];
+        var k = 0;
+        for (;;) {
+          var l = 2 * k + 1;
+          var r = l + 1;
+          var m = k;
+          if (l < size && key[ids[l]] < key[ids[m]]) m = l;
+          if (r < size && key[ids[r]] < key[ids[m]]) m = r;
+          if (m === k) break;
+          var t = ids[m];
+          ids[m] = ids[k];
+          ids[k] = t;
+          k = m;
+        }
+        return top;
+      },
+    };
+  }
+
+  var DC = [-1, 0, 1, -1, 1, -1, 0, 1];
+  var DR = [-1, -1, -1, 0, 0, 1, 1, 1];
+
+  // Fill pits, route water downhill and count the cells draining through each cell.
+  function flowGrid(z, n, cell) {
+    var count = n * n;
+    var filled = new Float64Array(count);
+    var done = new Uint8Array(count);
+    var heap = flowHeap(filled, count);
+    var i, r, c, k;
+    for (i = 0; i < count; i++) {
+      r = (i / n) | 0;
+      c = i - r * n;
+      if (z[i] !== z[i]) {
+        filled[i] = -Infinity;
+        done[i] = 1;
+      } else if (r === 0 || c === 0 || r === n - 1 || c === n - 1) {
+        filled[i] = z[i];
+        done[i] = 1;
+        heap.push(i);
+      }
+    }
+    for (i = 0; i < count; i++) {
+      if (done[i]) continue;
+      r = (i / n) | 0;
+      c = i - r * n;
+      for (k = 0; k < 8; k++) {
+        if (filled[(r + DR[k]) * n + c + DC[k]] === -Infinity) {
+          filled[i] = z[i];
+          done[i] = 1;
+          heap.push(i);
+          break;
+        }
+      }
+    }
+    while (heap.size()) {
+      i = heap.pop();
+      r = (i / n) | 0;
+      c = i - r * n;
+      for (k = 0; k < 8; k++) {
+        var rr = r + DR[k];
+        var cc = c + DC[k];
+        if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
+        var j = rr * n + cc;
+        if (done[j]) continue;
+        done[j] = 1;
+        filled[j] = Math.max(z[j], filled[i] + 0.001);
+        heap.push(j);
+      }
+    }
+    var diag = cell * Math.SQRT2;
+    var down = new Int32Array(count).fill(-1);
+    var inflow = new Int32Array(count);
+    for (i = 0; i < count; i++) {
+      if (filled[i] === -Infinity) continue;
+      r = (i / n) | 0;
+      c = i - r * n;
+      var best = 0;
+      for (k = 0; k < 8; k++) {
+        var r2 = r + DR[k];
+        var c2 = c + DC[k];
+        if (r2 < 0 || c2 < 0 || r2 >= n || c2 >= n) continue;
+        var j2 = r2 * n + c2;
+        if (filled[j2] === -Infinity) continue;
+        var drop = (filled[i] - filled[j2]) / (DC[k] && DR[k] ? diag : cell);
+        if (drop > best) {
+          best = drop;
+          down[i] = j2;
+        }
+      }
+      if (down[i] >= 0) inflow[down[i]]++;
+    }
+    // Upstream cells first (Kahn's order), adding each cell's water to the next one down.
+    var acc = new Float64Array(count);
+    var queue = new Int32Array(count);
+    var head = 0;
+    var tail = 0;
+    for (i = 0; i < count; i++) {
+      if (filled[i] === -Infinity) continue;
+      acc[i] = 1;
+      if (!inflow[i]) queue[tail++] = i;
+    }
+    while (head < tail) {
+      i = queue[head++];
+      var d = down[i];
+      if (d < 0) continue;
+      acc[d] += acc[i];
+      if (--inflow[d] === 0) queue[tail++] = d;
+    }
+    return { acc: acc, filled: filled };
+  }
+
+  function renderFlowTile(z, x, y) {
+    var tiles = [];
+    for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) tiles.push(demTile(z, x + dx, y + dy));
+    return Promise.all(tiles).then(function (dems) {
+      if (!dems[4]) return emptyPng();
+      // 3 × 3 tiles at half resolution: a 384-cell square, the map tile in its middle third.
+      var n = 384;
+      var grid = new Float32Array(n * n);
+      for (var r = 0; r < n; r++) {
+        for (var c = 0; c < n; c++) {
+          var t = dems[((r / 128) | 0) * 3 + ((c / 128) | 0)];
+          var sr = (r % 128) * 2;
+          var sc = (c % 128) * 2;
+          grid[r * n + c] = t ? (t[sr * 256 + sc] + t[sr * 256 + sc + 1] + t[(sr + 1) * 256 + sc] + t[(sr + 1) * 256 + sc + 1]) / 4 : NaN;
+        }
+      }
+      var lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 0.5)) / Math.pow(2, z)))) * 180) / Math.PI;
+      var cell = ((40075016.686 * Math.cos((lat * Math.PI) / 180)) / (256 * Math.pow(2, z))) * 2;
+      var flow = flowGrid(grid, n, cell);
+      // Thinnest stream drawn: 0.25 km² draining in, or 40 cells when cells are big.
+      var minCells = Math.max(250000 / (cell * cell), 40);
+      var canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      var ctx = canvas.getContext('2d');
+      var img = ctx.createImageData(256, 256);
+      var any = false;
+      for (var py = 0; py < 256; py++) {
+        for (var px = 0; px < 256; px++) {
+          var gi = (128 + (py >> 1)) * n + 128 + (px >> 1);
+          var a = flow.acc[gi];
+          var rgba = null;
+          if (a >= minCells) {
+            var level = a >= minCells * 64 ? 3 : a >= minCells * 16 ? 2 : a >= minCells * 4 ? 1 : 0;
+            rgba = FLOW_SHADES[level];
+          } else if (flow.filled[gi] - grid[gi] >= POOL_M) rgba = POOL_RGBA;
+          if (!rgba) continue;
+          var o = (py * 256 + px) * 4;
+          img.data[o] = rgba[0];
+          img.data[o + 1] = rgba[1];
+          img.data[o + 2] = rgba[2];
+          img.data[o + 3] = rgba[3];
+          any = true;
+        }
+      }
+      if (!any) return emptyPng();
+      ctx.putImageData(img, 0, 0);
+      return canvasToPng(canvas);
+    });
+  }
+
+  if (hasMapLibre)
+    maplibregl.addProtocol('farmflow', function (params) {
+      var parts = params.url.replace('farmflow://', '').split('/').map(Number);
+      return renderFlowTile(parts[0], parts[1], parts[2]).then(function (data) {
+        return { data: data };
+      });
+    });
 
   function onTileData(msg) {
     var req = tileRequests[msg.requestId];

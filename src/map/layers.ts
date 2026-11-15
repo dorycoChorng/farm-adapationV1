@@ -5,7 +5,7 @@
  * through the backend; the app does not fake them.
  */
 export type BaseLayerId = 'satellite-s2' | 'satellite-esri' | 'outline';
-export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover';
+export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover' | 'waterflow';
 export type PlannedLayerId = 'rainfall' | 'soil' | 'sunlight';
 
 export interface RasterProvider {
@@ -83,6 +83,13 @@ export const LAND_COVER_OVERLAY = {
     '<a href="https://esa-worldcover.org">ESA WorldCover 2021</a> v200 (CC BY 4.0), © ESA WorldCover project / contains modified Copernicus Sentinel data (2021)',
   licence: 'CC BY 4.0',
 };
+
+/**
+ * Water flow anywhere in the world, worked out in the map page from the terrain tiles
+ * (src/map/web/map-app.js). Shown from about district zoom, where 30 m elevation can
+ * pick out the small streams and gullies that matter on a farm.
+ */
+export const WATER_FLOW_OVERLAY = { minzoom: 10 };
 
 export interface PlannedLayer {
   id: PlannedLayerId;
