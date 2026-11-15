@@ -172,6 +172,25 @@ export function scoreCrop(crop: CropProfile, site: SiteValues): CropResult {
   };
 }
 
+/** Months (0–11) in which sowing scores at least `min` without irrigation, in calendar order. */
+export function goodSowMonths(result: Pick<CropResult, 'months'>, min = 50): number[] {
+  return result.months.filter((o): o is MonthOption => !!o && o.score >= min).map((o) => o.month);
+}
+
+/** Months grouped into runs, wrapping over the new year: [10, 11, 0, 1, 5] → [[10, 1], [5, 5]]. */
+export function monthRuns(months: number[]): [number, number][] {
+  if (!months.length) return [];
+  const set = new Set(months);
+  if (set.size === 12) return [[0, 11]];
+  // Start each run at a month whose previous month is not in the set.
+  const starts = [...set].filter((m) => !set.has((m + 11) % 12)).sort((a, b) => a - b);
+  return starts.map((start) => {
+    let end = start;
+    while (set.has((end + 1) % 12)) end = (end + 1) % 12;
+    return [start, end] as [number, number];
+  });
+}
+
 /** Score every crop, best first; crops that could not be scored go last. */
 export function rankCrops(summary: EnvSummary, crops: CropProfile[] = CROPS): CropResult[] {
   const site = siteValues(summary);

@@ -111,14 +111,52 @@ const EMOJI: Record<string, string> = {
   ginger: '🫚',
   sunflower: '🌻',
   lotus: '🪷',
+  // Grains and beans that look like the emoji.
+  sorghum: '🌾',
+  'pearl-millet': '🌾',
+  barley: '🌾',
+  oats: '🌾',
+  soybean: '🫘',
+  'common-bean': '🫘',
+  mungbean: '🫘',
+  'black-gram': '🫘',
+  cowpea: '🫘',
+  'pigeon-pea': '🫘',
+  chickpea: '🫘',
+  lentil: '🫘',
+  // Leafy greens.
+  cabbage: '🥬',
+  'pak-choi': '🥬',
+  'mustard-greens': '🥬',
+  spinach: '🥬',
+  'water-spinach': '🥬',
+  amaranth: '🥬',
+  cauliflower: '🥦',
+  // Herbs and leaves.
+  basil: '🌿',
+  coriander: '🌿',
+  lemongrass: '🌿',
+  moringa: '🌿',
+  // Others with a matching emoji.
+  pumpkin: '🎃',
+  pomelo: '🍊',
+  sugarcane: '🎋',
+  cocoa: '🍫',
+  'oil-palm': '🌴',
+  'sugar-palm': '🌴',
 };
+/**
+ * Category emoji only where the whole category looks alike (grains, beans). For the
+ * rest a plain seedling, so no crop shows a fruit or vegetable it isn't; the photo on
+ * each crop card shows the real plant.
+ */
 const CATEGORY_EMOJI: Record<CropCategory, string> = {
   cereals: '🌾',
   pulses: '🫘',
-  roots: '🥔',
-  vegetables: '🥬',
-  fruits: '🍐',
-  other: '🌿',
+  roots: '🌱',
+  vegetables: '🌱',
+  fruits: '🌱',
+  other: '🌱',
 };
 export const cropEmoji = (crop: CropProfile) => EMOJI[crop.id] ?? CATEGORY_EMOJI[crop.category];
 

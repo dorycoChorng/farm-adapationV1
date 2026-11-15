@@ -82,6 +82,37 @@ export function gaezCodeFor(crop: Pick<CropProfile, 'id' | 'category'>): GaezCod
   return BY_CROP[crop.id] ?? BY_CATEGORY[crop.category] ?? null;
 }
 
+/**
+ * Smallest harvested area for a crop, or the crop group it belongs to, to count as grown
+ * in a country (FAOSTAT 2019–2021 via GAEZ v5).
+ */
+export const MIN_COUNTRY_HA = 1000;
+
+/**
+ * Whether farmers in a country grow a crop, from GAEZ's country totals: true when its
+ * GAEZ crop (rice, cassava, maize…) or crop group (fruits, vegetables, pulses…) covers at
+ * least MIN_COUNTRY_HA there. Groups can't say which fruit or vegetable is grown, so a
+ * crop in a group passes when the group does. Null when the country or code is unknown.
+ */
+export function grownInCountry(crop: Pick<CropProfile, 'id' | 'category'>, iso3: string | null): boolean | null {
+  const c = iso3 ? COUNTRIES[iso3] : undefined;
+  const code = gaezCodeFor(crop);
+  if (!c || !code) return null;
+  const area = (k: GaezCode | undefined) => (k ? (c.crops.find(([x]) => x === k)?.[1] ?? 0) : 0);
+  // Some countries report a crop inside its group rather than on its own (Cambodia's
+  // tomatoes are counted with "other vegetables"), so the group is the second check.
+  return area(code) >= MIN_COUNTRY_HA || area(BY_CATEGORY[crop.category]) >= MIN_COUNTRY_HA;
+}
+
+/**
+ * The short list shown by default: well-known crops (curated names, see crops.ts) that
+ * the country's statistics show are grown there. Where the statistics can't tell, the
+ * well-known flag decides alone.
+ */
+export function isCommonCrop(crop: Pick<CropProfile, 'id' | 'category' | 'known'>, iso3: string | null): boolean {
+  return crop.known && grownInCountry(crop, iso3) !== false;
+}
+
 // ------------------------------------------------------------ the cell at a place
 
 /** How many of the country's main crops are read at the place, and yields for how many. */
