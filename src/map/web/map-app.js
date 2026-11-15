@@ -80,6 +80,37 @@
     };
   }
 
+  // Rainfall or sunlight: NASA POWER grid cells coloured along the shared stops.
+  function climateLayer(id, cfg) {
+    var ramp = ['interpolate', ['linear'], ['get', 'v']];
+    cfg.climate.stops[id].forEach(function (stop) {
+      ramp.push(stop[0], stop[1]);
+    });
+    return {
+      id: id,
+      type: 'fill',
+      source: 'climate-' + id,
+      layout: { visibility: 'none' },
+      paint: { 'fill-color': ramp, 'fill-opacity': 0.55, 'fill-antialias': false },
+    };
+  }
+
+  function setClimateGrid(layer, cells) {
+    var src = map.getSource('climate-' + layer);
+    if (!src) return;
+    src.setData(
+      fc(
+        cells.map(function (c) {
+          return {
+            type: 'Feature',
+            properties: { v: c.v },
+            geometry: { type: 'Polygon', coordinates: [[[c.w, c.s], [c.e, c.s], [c.e, c.n], [c.w, c.n], [c.w, c.s]]] },
+          };
+        }),
+      ),
+    );
+  }
+
   function buildStyle(cfg) {
     var sources = {
       world: { type: 'geojson', data: window.__WORLD__, attribution: 'Natural Earth' },
@@ -93,6 +124,9 @@
       },
       accuracy: { type: 'geojson', data: fc([]) },
       zones: { type: 'geojson', data: fc([]) },
+      soil: rasterSource(cfg.soil),
+      'climate-rainfall': { type: 'geojson', data: fc([]), attribution: cfg.climate.attribution },
+      'climate-sunlight': { type: 'geojson', data: fc([]), attribution: cfg.climate.attribution },
       water: { type: 'geojson', data: fc([]), attribution: 'NASADEM (NASA/JPL) via Microsoft Planetary Computer' },
       ring: { type: 'geojson', data: fc([]) },
       waterflow: {
@@ -143,6 +177,15 @@
         layout: { visibility: 'none' },
         paint: { 'raster-opacity': 0.72, 'raster-resampling': 'nearest', 'raster-fade-duration': 0 },
       },
+      {
+        id: 'soil',
+        type: 'raster',
+        source: 'soil',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.7 },
+      },
+      climateLayer('rainfall', cfg),
+      climateLayer('sunlight', cfg),
       {
         id: 'waterflow',
         type: 'raster',
@@ -679,6 +722,10 @@
       bearing: map.getBearing(),
       pitch: map.getPitch(),
       projection: proj && proj.type === 'mercator' ? 'mercator' : config.projection,
+      bounds: (function () {
+        var b = map.getBounds();
+        return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+      })(),
     };
   }
 
@@ -1166,6 +1213,9 @@
           break;
         case 'setZones':
           setZones(msg.zones, msg.selected == null ? null : msg.selected);
+          break;
+        case 'setClimateGrid':
+          setClimateGrid(msg.layer, msg.cells);
           break;
         case 'setWaterFlow':
           setWaterFlow(msg.flow);

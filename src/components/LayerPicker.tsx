@@ -1,9 +1,10 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useI18n } from '../i18n';
 import { LAND_COVER_CLASSES } from '../env/sources';
 import type { TranslationKey } from '../i18n/en';
-import { BASE_LAYERS, type BaseLayerId, LAND_COVER_OVERLAY, type OverlayId, PLANNED_LAYERS } from '../map/layers';
+import { CLIMATE_STOPS } from '../env/climateGrid';
+import { BASE_LAYERS, type BaseLayerId, LAND_COVER_OVERLAY, type OverlayId, PLANNED_LAYERS, SOIL_OVERLAY_LICENCE } from '../map/layers';
 import { colors, spacing, TOUCH_TARGET } from '../theme/colors';
 import { Button, IconButton, type IconName, Ionicons, tapFeedback } from './ui';
 
@@ -21,11 +22,18 @@ const WATER_FLOW_LEGEND: [string, TranslationKey][] = [
   ['#7e57c2', 'layers.waterflowPool'],
 ];
 
+/** ISRIC's own legend for the pH layer, so the colours always match the map. */
+const SOIL_LEGEND_URL = (Platform.OS === 'web' && typeof window !== 'undefined' ? `${window.location.origin}/isric-maps/` : 'https://maps.isric.org/') +
+  'mapserv?map=/map/phh2o.map&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=phh2o_0-5cm_mean&FORMAT=image/png&SLD_VERSION=1.1.0';
+
 const OVERLAY_ICONS: Record<OverlayId, IconName> = {
   places: 'text-outline',
   landcover: 'leaf-outline',
   hillshade: 'triangle-outline',
   waterflow: 'water-outline',
+  rainfall: 'rainy-outline',
+  sunlight: 'sunny-outline',
+  soil: 'layers-outline',
   boundaries: 'git-network-outline',
 };
 
@@ -83,7 +91,7 @@ export function LayerPicker({
               );
             })}
             <Text style={s.section}>{t('layers.overlays')}</Text>
-            {(['places', 'waterflow', 'landcover', 'hillshade', 'boundaries'] as OverlayId[]).map((id) => (
+            {(['places', 'waterflow', 'rainfall', 'sunlight', 'soil', 'landcover', 'hillshade', 'boundaries'] as OverlayId[]).map((id) => (
               <View key={id}>
                 <View style={s.switchRow}>
                   <Ionicons name={OVERLAY_ICONS[id]} size={20} color={colors.textMuted} />
@@ -116,6 +124,30 @@ export function LayerPicker({
                     ) : null}
                   </View>
                 ) : null}
+                {id === 'rainfall' || id === 'sunlight' ? (
+                  <View style={s.overlayInfo}>
+                    <Text style={s.note}>{t(id === 'rainfall' ? 'layers.rainfallNote' : 'layers.sunlightNote')}</Text>
+                    {state.overlays[id] ? (
+                      <View style={s.legend}>
+                        {CLIMATE_STOPS[id].map(([v, color]) => (
+                          <View key={v} style={s.legendItem}>
+                            <View style={[s.swatch, { backgroundColor: color }]} />
+                            <Text style={s.legendText}>{id === 'rainfall' ? `${v.toLocaleString('en-US')} mm` : `${v} kWh/m²`}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
+                {id === 'soil' ? (
+                  <View style={s.overlayInfo}>
+                    <Text style={s.note}>{t('layers.soilNote')}</Text>
+                    <Text style={s.note}>{SOIL_OVERLAY_LICENCE}</Text>
+                    {state.overlays.soil ? (
+                      <Image source={{ uri: SOIL_LEGEND_URL }} style={s.soilLegend} resizeMode="contain" accessibilityLabel={t('layers.soilLegend')} />
+                    ) : null}
+                  </View>
+                ) : null}
                 {id === 'landcover' ? (
                   <View style={s.overlayInfo}>
                     <Text style={s.note}>{t('layers.landcoverNote')}</Text>
@@ -134,7 +166,7 @@ export function LayerPicker({
                 ) : null}
               </View>
             ))}
-            <Text style={s.section}>{t('layers.planned')}</Text>
+            {PLANNED_LAYERS.length ? <Text style={s.section}>{t('layers.planned')}</Text> : null}
             {PLANNED_LAYERS.map((l) => (
               <View key={l.id} style={[s.option, s.optionDisabled]} accessibilityState={{ disabled: true }}>
                 <Ionicons name="lock-closed-outline" size={18} color={colors.textFaint} />
@@ -144,7 +176,7 @@ export function LayerPicker({
                 </View>
               </View>
             ))}
-            <Text style={s.note}>{t('layers.plannedNote')}</Text>
+            {PLANNED_LAYERS.length ? <Text style={s.note}>{t('layers.plannedNote')}</Text> : null}
           </ScrollView>
           <Button label={t('common.close')} onPress={onClose} grow={false} style={{ marginTop: spacing.md }} />
         </View>
@@ -154,6 +186,7 @@ export function LayerPicker({
 }
 
 const s = StyleSheet.create({
+  soilLegend: { width: 220, height: 180, marginTop: spacing.sm, alignSelf: 'flex-start' },
   backdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface,

@@ -88,6 +88,8 @@ const CONFIG = {
     fallbackTiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
   },
   elevationZoom: 12,
+  soil: { tiles: ['https://maps.isric.org/mapserv?BBOX={bbox-epsg-3857}'], tileSize: 256, minzoom: 0, maxzoom: 12, attribution: 'test' },
+  climate: { attribution: 'test', stops: { rainfall: [[0, '#ffffff'], [3000, '#0000ff']], sunlight: [[3, '#6a51a3'], [6, '#c4361b']] } },
   landCover: { minzoom: 7, maxzoom: 14, attribution: 'test', colors: { 40: '#f096ff', 80: '#0064c8' } },
 };
 

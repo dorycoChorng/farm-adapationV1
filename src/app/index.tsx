@@ -50,7 +50,7 @@ export default function GlobeScreen() {
   const peek = PEEK + insets.bottom;
   const expanded = Math.max(peek + 120, Math.round(height * 0.78) - insets.top);
 
-  const { ref: mapRef, view: mapView, tileError, onEvent: onMapEvent, queryElevation } = useMapController((event) => {
+  const { ref: mapRef, view: mapView, tileError, onEvent: onMapEvent, queryElevation, climateBusy, climateTooFar } = useMapController((event) => {
     if (event.type === 'mapTap') {
       tapFeedback('select');
       select({
@@ -223,6 +223,13 @@ export default function GlobeScreen() {
         <View style={[s.zoomHint, { top: top + SEARCH_BAR + CHIPS + (layers.overlays.landcover && mapView.zoom < LAND_COVER_OVERLAY.minzoom ? 48 : 8) }]} pointerEvents="none" testID="waterflow-zoom-hint">
           <Ionicons name="water" size={15} color={colors.white} />
           <Text style={s.zoomHintText}>{t('layers.waterflowZoom')}</Text>
+        </View>
+      ) : null}
+
+      {climateTooFar || climateBusy ? (
+        <View style={[s.zoomHint, { top: top + SEARCH_BAR + CHIPS + 88 }]} pointerEvents="none" testID="climate-hint">
+          <Ionicons name={climateBusy ? 'cloud-download-outline' : 'search'} size={15} color={colors.white} />
+          <Text style={s.zoomHintText}>{climateBusy ? t('layers.climateLoading') : t('layers.climateZoom')}</Text>
         </View>
       ) : null}
 

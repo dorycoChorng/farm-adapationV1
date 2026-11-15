@@ -17,6 +17,8 @@ export const WEB_PROXIES: Record<string, string> = {
   'https://nasademeuwest.blob.core.windows.net/nasadem-cog/': '/nasadem/',
   'https://planetarycomputer.microsoft.com/api/sas/': '/pc-sas/',
   'https://planetarycomputer.microsoft.com/api/data/': '/pc-data/',
+  // NASA POWER: the map's rainfall and sunlight grids, cached a day by Vercel.
+  'https://power.larc.nasa.gov/': '/power/',
 };
 
 export function webUrl(url: string) {

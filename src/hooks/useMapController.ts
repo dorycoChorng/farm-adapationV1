@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import type { FarmMapHandle } from '../components/map/types';
-import { appFetchRange } from '../env/appFetch';
+import { appFetchJson, appFetchRange } from '../env/appFetch';
+import { blocksFor, CLIMATE_LAYERS, climateBlock, type ClimateLayer, type GridCell } from '../env/climateGrid';
+import { CLIMATE_OVERLAY } from '../map/layers';
 import { landCoverTile, runLength } from '../env/rasters';
 import type { LngLat, MapEvent, ViewState } from '../map/bridge';
 import { useI18n } from '../i18n';
@@ -43,10 +45,55 @@ export function useMapController(onMapEvent?: (event: MapEvent) => void) {
   // Re-apply when the user changes layers or language; the 'ready' event covers maps that mount later.
   useEffect(applyLayers, [layers, language, applyLayers]);
 
+  // Rainfall and sunlight overlays: fetch NASA POWER's grid for what is on screen, a short
+  // moment after the map stops moving, and resend it when a map page (re)loads.
+  const climateSent = useRef<Partial<Record<ClimateLayer, GridCell[]>>>({});
+  const [climateBusy, setClimateBusy] = useState(false);
+  const [climateTooFar, setClimateTooFar] = useState(false);
+  const rainfallOn = layers.overlays.rainfall;
+  const sunlightOn = layers.overlays.sunlight;
+  useEffect(() => {
+    const active = CLIMATE_LAYERS.filter((l) => layersRef.current.overlays[l]);
+    if (!active.length || !view?.bounds) {
+      setClimateTooFar(false);
+      return;
+    }
+    const blocks = view.zoom >= CLIMATE_OVERLAY.minzoom ? blocksFor(view.bounds) : [];
+    setClimateTooFar(!blocks.length);
+    if (!blocks.length) return;
+    let live = true;
+    const timer = setTimeout(async () => {
+      setClimateBusy(true);
+      for (const layer of active) {
+        const cells: GridCell[] = [];
+        for (const [bx, by] of blocks) {
+          try {
+            cells.push(...(await climateBlock(layer, bx, by, (url) => appFetchJson(url))));
+          } catch {
+            // One block missing (offline, rate limit) leaves a gap; it is tried again on the next move.
+          }
+          if (!live) return;
+        }
+        climateSent.current[layer] = cells;
+        ref.current?.send({ type: 'setClimateGrid', layer, cells });
+      }
+      if (live) setClimateBusy(false);
+    }, 500);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+      setClimateBusy(false);
+    };
+  }, [view, rainfallOn, sunlightOn]);
+
   const onEvent = useCallback((event: MapEvent) => {
     switch (event.type) {
       case 'ready':
         applyLayers();
+        for (const layer of CLIMATE_LAYERS) {
+          const cells = climateSent.current[layer];
+          if (cells) ref.current?.send({ type: 'setClimateGrid', layer, cells });
+        }
         break;
       case 'viewChanged':
         setView(event.view);
@@ -80,5 +127,5 @@ export function useMapController(onMapEvent?: (event: MapEvent) => void) {
     });
   }, []);
 
-  return { ref, view, tileError, clearTileError: () => setTileError(false), onEvent, queryElevation };
+  return { ref, view, tileError, clearTileError: () => setTileError(false), onEvent, queryElevation, climateBusy, climateTooFar };
 }
