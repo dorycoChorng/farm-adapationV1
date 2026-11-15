@@ -71,7 +71,12 @@ function Problem({ problem }: { problem: SoilProblem }) {
           <Text style={[st.badgeText, { color: sev.fg }]}>{t(`fix.severity.${problem.severity}` as TranslationKey)}</Text>
         </View>
       </View>
-      <Text style={type.small}>{t(`fix.p.${problem.id}.why` as TranslationKey, { v: fmtValue(problem) })}</Text>
+      {problem.measured ? <Text style={st.measured}>{t('fix.measured')}</Text> : null}
+      <Text style={type.small}>
+        {problem.measured && problem.value === null && (problem.id === 'sandy' || problem.id === 'heavy-clay')
+          ? t(`fix.p.${problem.id}.whyTest` as TranslationKey)
+          : t(`fix.p.${problem.id}.why` as TranslationKey, { v: fmtValue(problem) })}
+      </Text>
       {steps.map((step, i) => (
         <View key={i} style={st.step}>
           <Text style={st.stepDot}>•</Text>
@@ -88,7 +93,10 @@ export function SaltCard({ summary }: { summary: EnvSummary }) {
   const { t } = useI18n();
   const risk = useMemo(() => soilFixPlan(summary).salt, [summary]);
   const style = SALT_STYLE[risk.level];
+  const band = risk.measuredEc === null ? '' : t(risk.measuredEc > 3 ? 'salt.band.severe' : risk.measuredEc >= 0.7 ? 'salt.band.care' : 'salt.band.fine');
   const params = {
+    ec: risk.measuredEc ?? '–',
+    band,
     km: risk.coastKm === null ? '–' : risk.coastKm < 20 ? risk.coastKm.toFixed(0) : String(Math.round(risk.coastKm / 5) * 5),
     m: risk.elevationM === null ? '–' : String(Math.round(risk.elevationM)),
     n: risk.dryMonths ?? '–',
@@ -122,4 +130,5 @@ const st = StyleSheet.create({
   badgeText: { fontSize: 12, fontWeight: '700' },
   step: { flexDirection: 'row', gap: 6, marginTop: 3 },
   stepDot: { fontSize: 15, color: colors.textMuted, lineHeight: 20 },
+  measured: { fontSize: 12, fontWeight: '700', color: colors.primary },
 });

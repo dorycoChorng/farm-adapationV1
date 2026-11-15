@@ -1,5 +1,5 @@
 /** Message protocol between React Native and the MapLibre page running in the WebView. */
-import type { BaseLayerId, OverlayId, RasterProvider } from './layers';
+import type { BaseLayerId, OverlayId, RasterProvider, TerrainSource } from './layers';
 
 export type LngLat = [number, number];
 export type MapMode = 'browse' | 'measure';
@@ -10,7 +10,7 @@ export interface MapInitConfig {
   zoom: number;
   projection: Projection;
   baseLayers: Record<string, RasterProvider | null>;
-  terrain: RasterProvider & { encoding: 'terrarium' };
+  terrain: TerrainSource;
   elevationZoom: number;
   /** Land-cover overlay: zoom range, attribution and the colour for each class code. */
   landCover: { minzoom: number; maxzoom: number; attribution: string; colors: Record<string, string> };

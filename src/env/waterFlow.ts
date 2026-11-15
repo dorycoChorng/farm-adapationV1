@@ -1,5 +1,6 @@
 import type { LatLng } from '../geo/types';
 import type { FetchJson } from './analyze';
+import { NASADEM_LAT, nasademUrl, planetaryToken } from './planetary';
 import { cog, demAt, demPixel, pointInRing } from './rasters';
 import { type FetchRange, fetchRange, pixelFor, readPixel } from './tiff';
 
@@ -13,33 +14,6 @@ import { type FetchRange, fetchRange, pixelFor, readPixel } from './tiff';
  * neighbour (D8), then count how many cells drain through each cell. This is a model of
  * the bare ground only: it does not know about canals, dikes, drains or paddy bunds.
  */
-
-// ---------------------------------------------------------------- NASADEM on Planetary Computer
-
-/** NASADEM cloud-optimised GeoTIFFs: 1°×1° tiles named by their south-west corner. */
-export const NASADEM_BASE = 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/v001/';
-/** Planetary Computer hands out short-lived read tokens (SAS) for each storage container. */
-export const PC_SAS_URL = 'https://planetarycomputer.microsoft.com/api/sas/v1/token/nasademeuwest/nasadem-cog';
-
-export function nasademTileName(lat: number, lon: number) {
-  const la = Math.floor(lat);
-  const lo = Math.floor(lon);
-  const ns = (la < 0 ? 's' : 'n') + String(Math.abs(la)).padStart(2, '0');
-  const ew = (lo < 0 ? 'w' : 'e') + String(Math.abs(lo)).padStart(3, '0');
-  return `NASADEM_HGT_${ns}${ew}.tif`;
-}
-
-let token: { value: string; expires: number } | null = null;
-
-/** A Planetary Computer read token, reused until five minutes before it expires. */
-export async function planetaryToken(getJson: FetchJson): Promise<string> {
-  if (token && token.expires - Date.now() > 5 * 60_000) return token.value;
-  const body = (await getJson(PC_SAS_URL, undefined, { timeoutMs: 15000 })) as { token?: string; 'msft:expiry'?: string };
-  if (!body?.token) throw new Error('no Planetary Computer token');
-  const expires = Date.parse(body['msft:expiry'] ?? '') || Date.now() + 30 * 60_000;
-  token = { value: body.token, expires };
-  return body.token;
-}
 
 // ---------------------------------------------------------------- elevation grid
 
@@ -86,7 +60,7 @@ async function nasademGrid(bbox: [number, number, number, number], get: FetchRan
     const lat = (gy0 - r * stride) * ARCSEC;
     for (let c = 0; c < cols; c++) {
       const lon = (gx0 + c * stride) * ARCSEC;
-      const info = await cog(`${NASADEM_BASE}${nasademTileName(lat, lon)}?${sas}`, get);
+      const info = await cog(nasademUrl(lat, lon, sas), get);
       const px = pixelFor(info, lon, lat);
       const v = px ? await readPixel(info, px[0], px[1], get) : null;
       // NASADEM marks voids with large negative values.
@@ -138,6 +112,8 @@ export async function readElevationGrid(
   get: FetchRange = fetchRange,
 ): Promise<ElevationGrid> {
   try {
+    const midLat = (bbox[1] + bbox[3]) / 2;
+    if (midLat < NASADEM_LAT[0] || midLat > NASADEM_LAT[1]) throw new Error('outside NASADEM');
     return await nasademGrid(bbox, get, await planetaryToken(getJson));
   } catch {
     return awsGrid(bbox, get);

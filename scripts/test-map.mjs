@@ -77,12 +77,15 @@ const CONFIG = {
     outline: null,
   },
   terrain: {
-    tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+    // The page serves terrain through farmdem://; with no Planetary Computer set it reads the backup tiles.
+    tiles: ['farmdem://{z}/{x}/{y}'],
     tileSize: 256,
     minzoom: 0,
-    maxzoom: 15,
+    maxzoom: 13,
     encoding: 'terrarium',
     attribution: 'test',
+    planetary: null,
+    fallbackTiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
   },
   elevationZoom: 12,
   landCover: { minzoom: 7, maxzoom: 14, attribution: 'test', colors: { 40: '#f096ff', 80: '#0064c8' } },

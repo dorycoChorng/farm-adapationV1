@@ -1,4 +1,5 @@
 import type { LatLng } from '../geo/types';
+import type { FetchJson } from './analyze';
 import { landCoverAt, pointInRing, readTerrain } from './rasters';
 import { STEEP_DEG } from './suitability';
 import { type FetchRange, fetchRange } from './tiff';
@@ -51,7 +52,7 @@ export function zoneKind(fractions: { code: number; fraction: number }[], slopeD
 /** Kinds where crop advice applies (the others need clearing, draining or terracing first, or can't be farmed). */
 export const FARMABLE_ZONES = new Set<ZoneKind>(['cropland', 'open', 'low', 'wet']);
 
-export async function readZones(centre: LatLng, ring: LatLng[] | null, get: FetchRange = fetchRange): Promise<ZoneData | null> {
+export async function readZones(centre: LatLng, ring: LatLng[] | null, get: FetchRange = fetchRange, getJson?: FetchJson): Promise<ZoneData | null> {
   const [w, s, e, n] = bounds(centre, ring);
   const mPerLon = M_PER_DEG * Math.cos((((s + n) / 2) * Math.PI) / 180);
   const widthM = (e - w) * mPerLon;
@@ -84,7 +85,7 @@ export async function readZones(centre: LatLng, ring: LatLng[] | null, get: Fetc
       const fractions = [...counts.entries()]
         .map(([code, k]) => ({ code, fraction: Number((k / valid.length).toFixed(3)) }))
         .sort((a, b) => b.fraction - a.fraction);
-      const terrain = await readTerrain(centreOf, get).catch(() => null);
+      const terrain = await readTerrain(centreOf, get, getJson).catch(() => null);
       zones.push({
         row: r,
         col: c,

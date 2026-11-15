@@ -1,4 +1,5 @@
-import { flowLevel, flowModel, nasademTileName, POND_M, waterFlowMap } from '../waterFlow';
+import { nasademTileName } from '../planetary';
+import { flowLevel, flowModel, POND_M, waterFlowMap } from '../waterFlow';
 
 /** A valley sloping south, with sides rising east and west, and a 3 m pit in the middle. */
 function valley(cols = 9, rows = 9) {

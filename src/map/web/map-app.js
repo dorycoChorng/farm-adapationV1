@@ -337,7 +337,7 @@
   // ---------- water flow anywhere (worked out in the page from the terrain tiles) ----------
   //
   // For each map tile, the elevation of that tile and its eight neighbours (the same
-  // Terrarium tiles the terrain shading uses: SRTM and other elevation models) is read at
+  // Terrarium tiles the terrain shading uses: NASADEM from Planetary Computer) is read at
   // half resolution, pits are filled (priority-flood), water is sent to the steepest
   // downhill neighbour (D8) and the land draining through each cell is counted. Cells that
   // carry water are drawn blue, darker as more land drains through them, and pits where
@@ -358,9 +358,80 @@
   var demOrder = [];
   var demCanvas = null;
 
-  function terrainUrl(z, x, y) {
-    return config.terrain.tiles[0].replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  // ---------- terrain tiles: NASADEM from Planetary Computer, AWS Terrain Tiles as backup ----------
+  //
+  // The Planetary Computer data API renders NASADEM as Terrarium-encoded PNG tiles from a
+  // registered mosaic. Registering takes one POST per session; if it fails, or a tile is
+  // missing (zoomed far out, outside 60° N–56° S, offline), the AWS tile is used instead.
+
+  var pcMosaic = null;
+  var pcFailedAt = 0;
+
+  function pcSearchId() {
+    var pc = config && config.terrain.planetary;
+    if (!pc) return Promise.resolve(null);
+    if (pcMosaic) return pcMosaic;
+    if (Date.now() - pcFailedAt < 60000) return Promise.resolve(null);
+    pcMosaic = fetch(pc.dataApi + 'mosaic/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collections: [pc.collection] }),
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (j) {
+        if (!j || !j.searchid) throw new Error('no mosaic');
+        return j.searchid;
+      })
+      .catch(function () {
+        pcMosaic = null;
+        pcFailedAt = Date.now();
+        return null;
+      });
+    return pcMosaic;
   }
+
+  function fallbackUrl(z, x, y) {
+    return config.terrain.fallbackTiles[0].replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  }
+
+  function fetchPng(url) {
+    return fetch(url)
+      .then(function (r) {
+        return r.ok ? r.arrayBuffer() : null;
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  // One Terrarium PNG for a tile, as bytes, or null.
+  function demPng(z, x, y) {
+    var pc = config.terrain.planetary;
+    var fromAws = function () {
+      return fetchPng(fallbackUrl(z, x, y));
+    };
+    if (!pc || z < pc.minzoom) return fromAws();
+    return pcSearchId().then(function (id) {
+      if (!id) return fromAws();
+      var url =
+        pc.dataApi + 'mosaic/tiles/' + id + '/WebMercatorQuad/' + z + '/' + x + '/' + y + '@1x.png' +
+        '?collection=' + pc.collection + '&assets=' + pc.asset + '&algorithm=terrarium';
+      return fetchPng(url).then(function (buf) {
+        return buf && buf.byteLength > 0 ? buf : fromAws();
+      });
+    });
+  }
+
+  if (hasMapLibre)
+    maplibregl.addProtocol('farmdem', function (params) {
+      var parts = params.url.replace('farmdem://', '').split('/').map(Number);
+      return demPng(parts[0], parts[1], parts[2]).then(function (data) {
+        if (!data) throw new Error('no terrain tile');
+        return { data: data };
+      });
+    });
 
   // One Terrarium tile as metres (256 × 256), or null where there is none.
   function demTile(z, x, y) {
@@ -369,12 +440,9 @@
     x = ((x % n) + n) % n;
     var key = z + '/' + x + '/' + y;
     if (demTiles[key]) return demTiles[key];
-    var p = fetch(terrainUrl(z, x, y))
-      .then(function (r) {
-        return r.ok ? r.blob() : null;
-      })
-      .then(function (blob) {
-        return blob ? createImageBitmap(blob) : null;
+    var p = demPng(z, x, y)
+      .then(function (buf) {
+        return buf ? createImageBitmap(new Blob([buf], { type: 'image/png' })) : null;
       })
       .then(function (img) {
         if (!img) return null;
@@ -916,14 +984,10 @@
   function queryElevation(requestId, point) {
     var z = config.elevationZoom;
     var t = tileFor(point[0], point[1], z);
-    var url = config.terrain.tiles[0].replace('{z}', z).replace('{x}', t.x).replace('{y}', t.y);
-    fetch(url)
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.blob();
-      })
-      .then(function (blob) {
-        return createImageBitmap(blob);
+    demPng(z, t.x, t.y)
+      .then(function (buf) {
+        if (!buf) throw new Error('no terrain tile');
+        return createImageBitmap(new Blob([buf], { type: 'image/png' }));
       })
       .then(function (bmp) {
         var canvas = document.createElement('canvas');

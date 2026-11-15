@@ -152,12 +152,12 @@ export async function analyzeLocation(location: LatLng, ring: LatLng[] | null, d
       },
       'no soil estimate here (water, built-up area or outside the model)',
     ).then(done('soil')),
-    section('aws-terrain', now, () => readTerrain(location, getRange), 'no elevation data here').then(done('terrain')),
+    section('aws-terrain', now, () => readTerrain(location, getRange, getJson), 'no elevation data here').then(done('terrain')),
     section('esa-worldcover', now, () => readLandCover(location, ring, getRange), 'no land cover here (open water or outside coverage)').then(
       done('landCover'),
     ),
     section('gaez', now, () => readLocalProduction(location, countryAt(location), getRange), 'no cropland recorded here').then(done('production')),
-    section('esa-worldcover', now, () => readZones(location, ring, getRange), 'no land cover here').then(done('zones')),
+    section('esa-worldcover', now, () => readZones(location, ring, getRange, getJson), 'no land cover here').then(done('zones')),
     // Offline table, parsed last so every download above has already started.
     section(
       'hwsd',
