@@ -1,3 +1,4 @@
+import { fixEn } from './fixEn';
 import { envEn } from './envEn';
 import { farmEn } from './farmEn';
 
@@ -166,6 +167,7 @@ export const en = {
   'offline.language': 'Language',
   ...envEn,
   ...farmEn,
+  ...fixEn,
 };
 
 export type TranslationKey = keyof typeof en;
