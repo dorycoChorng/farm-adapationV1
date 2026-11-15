@@ -38,7 +38,6 @@ const summary: EnvSummary = {
     },
   },
   rainHistory: { status: 'error', source: 'nasa-power', fetchedAt: at, reason: 'offline' },
-  soil: { status: 'no-data', source: 'soilgrids', fetchedAt: at, reason: 'synthetic' },
   terrain: { status: 'ok', source: 'aws-terrain', fetchedAt: at, data: { elevationM: 5, slopeDeg: 1, cellSizeM: 19 } },
   landCover: { status: 'ok', source: 'esa-worldcover', fetchedAt: at, data: { classAtPoint: 40, fractions: [{ code: 40, fraction: 1 }], samples: 1 } },
 };

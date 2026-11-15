@@ -4,14 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { type CropProfile, cropName } from '../env/crops';
 import { useI18n } from '../i18n';
+import { isCommonsUpload, loadPhotoCredit, type PhotoCredit } from '../plants/photoCredit';
 import { colors, radius, spacing } from '../theme/colors';
 import { IconButton, Ionicons, tapFeedback } from './ui';
 
 /**
  * A real photo of each crop, from the crop's Wikipedia article (looked up by its
- * scientific name, then its English name) through Wikipedia's public REST API. The
- * pictures are Wikimedia Commons files under free licences; the viewer links to each
- * file's page, which names the author and licence. Nothing is shown offline.
+ * scientific name, then its English name) through Wikipedia's public REST API.
+ *
+ * Copyright: only pictures stored on Wikimedia Commons are used. Commons accepts only
+ * free licences (CC BY, CC BY-SA, CC0) and public-domain files; an article picture stored
+ * on Wikipedia itself may be a copyrighted "fair use" image, so those are skipped. The
+ * viewer names the photographer and licence (read from Commons) and links to the file's
+ * page, as CC BY and CC BY-SA require. Nothing is shown offline.
  */
 
 interface Photo {
@@ -41,6 +46,8 @@ async function summaryPhoto(title: string): Promise<Photo | null> {
   const body = (await res.json()) as Summary;
   if (body.type === 'disambiguation' || !body.thumbnail || !body.originalimage) return null;
   const orig = body.originalimage;
+  // Free-licence pictures only (see the note at the top).
+  if (!isCommonsUpload(orig.source) || !isCommonsUpload(body.thumbnail.source)) return null;
   // A 1280 px copy for zooming: Wikimedia makes one from the thumbnail URL, but only smaller than the original.
   const large = orig.width > LARGE_PX && body.thumbnail.source.includes('/thumb/') ? body.thumbnail.source.replace(/\/\d+px-/, `/${LARGE_PX}px-`) : orig.source;
   const file = decodeURIComponent(orig.source.split('/').pop() ?? '');
@@ -131,6 +138,18 @@ function PhotoViewer({ photo, title, scientific, onClose }: { photo: Photo; titl
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [zoom, setZoom] = useState(1);
+  const [credit, setCredit] = useState<PhotoCredit | null>(null);
+  useEffect(() => {
+    if (!photo.filePage) return;
+    let live = true;
+    loadPhotoCredit(photo.filePage).then(
+      (c) => live && setCredit(c),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [photo.filePage]);
   const baseW = width;
   const baseH = Math.min(width * photo.aspect, height * 0.7);
   const fitW = baseH < width * photo.aspect ? baseH / photo.aspect : baseW;
@@ -173,6 +192,11 @@ function PhotoViewer({ photo, title, scientific, onClose }: { photo: Photo; titl
           <IconButton icon="add" label={t('photo.zoomIn')} onPress={() => set(zoom + 0.5)} tone="glass" testID="photo-zoom-in" />
         </View>
         <Pressable accessibilityRole="link" onPress={() => photo.filePage && Linking.openURL(photo.filePage)} disabled={!photo.filePage}>
+          {credit && (credit.artist || credit.licence) ? (
+            <Text style={st.creditBy} testID="photo-credit-by">
+              {t('photo.by', { artist: credit.artist ?? '–', licence: credit.licence ?? '–' })}
+            </Text>
+          ) : null}
           <Text style={st.credit}>{t('photo.credit', { article: photo.articleTitle })}</Text>
         </Pressable>
       </View>
@@ -201,5 +225,6 @@ const st = StyleSheet.create({
   scrollX: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.sm },
   zoomText: { color: colors.white, fontSize: 15, fontWeight: '700', minWidth: 44, textAlign: 'center' },
+  creditBy: { color: colors.white, fontSize: 13, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg },
   credit: { color: '#c7d6cc', fontSize: 12, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg, textDecorationLine: 'underline' },
 });

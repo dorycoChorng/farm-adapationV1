@@ -11,12 +11,9 @@ export type FetchJson = (url: string, signal?: AbortSignal, options?: { timeoutM
 
 const TIMEOUT_MS = 30000;
 
-/** An HTTP failure, keeping the status so busy or broken servers can be retried. */
+/** An HTTP failure, keeping the status the server answered with. */
 export class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    readonly retryAfterS: number | null,
-  ) {
+  constructor(readonly status: number) {
     super(`HTTP ${status}`);
     this.name = 'HttpError';
   }
@@ -30,10 +27,7 @@ export const fetchJson: FetchJson = async (url, signal, options) => {
   signal?.addEventListener('abort', onAbort);
   try {
     const res = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
-    if (!res.ok) {
-      const retryAfter = Number(res.headers.get('retry-after'));
-      throw new HttpError(res.status, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null);
-    }
+    if (!res.ok) throw new HttpError(res.status);
     return await res.json();
   } catch (e) {
     if (controller.signal.aborted && !signal?.aborted) throw new Error('timed out');
@@ -44,36 +38,11 @@ export const fetchJson: FetchJson = async (url, signal, options) => {
   }
 };
 
-/** Retry a request when the server is busy or briefly failing (429, 5xx, dropped connections). */
-export async function withRetry<T>(
-  run: () => Promise<T>,
-  { attempts = 3, delaysMs = [3000, 8000], signal, sleep = (ms: number) => new Promise((r) => setTimeout(r, ms)) }: {
-    attempts?: number;
-    delaysMs?: number[];
-    signal?: AbortSignal;
-    sleep?: (ms: number) => Promise<unknown>;
-  } = {},
-): Promise<T> {
-  for (let i = 0; ; i++) {
-    try {
-      return await run();
-    } catch (e) {
-      // A TypeError is fetch's dropped-connection error; timeouts are not retried (they already waited long).
-      const retryable = e instanceof HttpError ? e.status === 429 || e.status >= 500 : e instanceof TypeError;
-      if (!retryable || i >= attempts - 1 || signal?.aborted) throw e;
-      const wait = e instanceof HttpError && e.retryAfterS !== null ? Math.min(e.retryAfterS * 1000, 30000) : (delaysMs[i] ?? delaysMs.at(-1) ?? 0);
-      await sleep(wait);
-    }
-  }
-}
-
 export interface AnalyzeDeps {
   fetchJson?: FetchJson;
   fetchRange?: FetchRange;
   now?: () => Date;
   signal?: AbortSignal;
-  /** Pause between retries; replaced in tests. */
-  sleep?: (ms: number) => Promise<unknown>;
   /** Called as each section finishes, with its result, so the screen can show it straight away. */
   onSection?: (key: SectionKey, section: Section<unknown>) => void;
 }

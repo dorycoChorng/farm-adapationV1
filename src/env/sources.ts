@@ -17,18 +17,6 @@ export const SOURCES: Record<SourceId, SourceInfo> = {
     confidence: 'medium',
     limitationKey: 'src.power.limits',
   },
-  soilgrids: {
-    id: 'soilgrids',
-    name: 'SoilGrids 2.0',
-    provider: 'ISRIC – World Soil Information',
-    url: 'https://soilgrids.org/',
-    licence: 'CC BY 4.0',
-    kind: 'statistical-model',
-    resolution: '250 m',
-    period: 'Model released 2020, built from soil profiles collected over many decades',
-    confidence: 'low',
-    limitationKey: 'src.soilgrids.limits',
-  },
   'aws-terrain': {
     id: 'aws-terrain',
     // Key kept as 'aws-terrain' so analyses saved earlier still load; NASADEM is read first now.
@@ -53,18 +41,6 @@ export const SOURCES: Record<SourceId, SourceInfo> = {
     period: 'Imagery from 2021',
     confidence: 'medium',
     limitationKey: 'src.worldcover.limits',
-  },
-  hwsd: {
-    id: 'hwsd',
-    name: 'Harmonized World Soil Database v2.0',
-    provider: 'FAO and IIASA',
-    url: 'https://www.fao.org/soils-portal/data-hub/soil-maps-and-databases/harmonized-world-soil-database-v20/en/',
-    licence: 'CC BY 4.0',
-    kind: 'soil-map',
-    resolution: '30 arc-seconds (about 1 km) grid; Cambodian soil units come from coarse regional maps',
-    period: 'Released 2023, compiled from national and regional soil maps and profiles',
-    confidence: 'low',
-    limitationKey: 'src.hwsd.limits',
   },
   gaez: {
     id: 'gaez',
@@ -98,5 +74,3 @@ export const LAND_COVER_CLASSES: Record<number, { key: string; color: string }> 
 /** Analyses older than this get a "data may be out of date" warning. */
 export const STALE_AFTER_DAYS = 180;
 
-/** Sources a new analysis reads. Soil maps are no longer used: soil comes only from the farmer's own test. */
-export const USED_SOURCES: SourceInfo[] = Object.values(SOURCES).filter((s) => s.id !== 'soilgrids' && s.id !== 'hwsd');

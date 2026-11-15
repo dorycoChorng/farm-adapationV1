@@ -5,13 +5,12 @@ import { type FetchRange, fetchRange } from './tiff';
 
 /**
  * Hosts the web build reads through its own origin, because they send no CORS
- * headers (WorldCover, FAO GAEZ, Planetary Computer storage) or don't reliably answer browser preflights (SoilGrids).
+ * headers (WorldCover, FAO GAEZ, Planetary Computer storage, NASA POWER).
  * vercel.json rewrites these paths in production; metro.config.js does it in
  * development. Native apps are not subject to CORS and call the hosts directly.
  */
 export const WEB_PROXIES: Record<string, string> = {
   'https://esa-worldcover.s3.eu-central-1.amazonaws.com/': '/worldcover/',
-  'https://rest.isric.org/': '/soilgrids/',
   'https://storage.googleapis.com/fao-gismgr-gaez-v5-data/': '/gaez/',
   // NASA's NASADEM elevation on Microsoft Planetary Computer, and its read-token service.
   'https://nasademeuwest.blob.core.windows.net/nasadem-cog/': '/nasadem/',

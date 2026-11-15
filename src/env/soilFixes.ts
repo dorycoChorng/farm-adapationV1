@@ -18,9 +18,6 @@ export type ProblemId =
   | 'low-organic'
   | 'sandy'
   | 'heavy-clay'
-  | 'poor-drainage'
-  | 'low-nutrients'
-  | 'low-nitrogen'
   | 'steep'
   | 'high-ground'
   | 'low-spots'
@@ -58,9 +55,6 @@ export const COPING_CROPS: Record<ProblemId, string[]> = {
   'low-organic': ['mungbean', 'cowpea', 'groundnut', 'soybean'],
   sandy: ['groundnut', 'cassava', 'watermelon', 'sweet-potato', 'cashew'],
   'heavy-clay': ['rice', 'taro', 'sugarcane'],
-  'poor-drainage': ['rice', 'taro'],
-  'low-nutrients': ['cassava', 'cashew', 'mungbean', 'cowpea'],
-  'low-nitrogen': ['mungbean', 'cowpea', 'groundnut', 'soybean', 'black-gram'],
   steep: ['cashew', 'mango', 'black-pepper', 'jackfruit'],
   'high-ground': ['tea', 'coffee-arabica', 'potato', 'cabbage', 'carrot', 'avocado'],
   'low-spots': ['rice', 'taro'],

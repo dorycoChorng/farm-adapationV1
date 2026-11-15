@@ -10,10 +10,6 @@
       "destination": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/:path*"
     },
     {
-      "source": "/soilgrids/:path*",
-      "destination": "https://rest.isric.org/:path*"
-    },
-    {
       "source": "/gaez/:path*",
       "destination": "https://storage.googleapis.com/fao-gismgr-gaez-v5-data/:path*"
     },
@@ -71,15 +67,6 @@
         {
           "key": "x-vercel-enable-rewrite-caching",
           "value": "0"
-        }
-      ]
-    },
-    {
-      "source": "/soilgrids/:path*",
-      "headers": [
-        {
-          "key": "CDN-Cache-Control",
-          "value": "max-age=2592000"
         }
       ]
     },
