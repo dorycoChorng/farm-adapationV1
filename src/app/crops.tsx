@@ -173,7 +173,7 @@ export default function CropsScreen() {
           <Text style={s.heroSub}>{t('crops.catalogue', { n: CROPS.length })}</Text>
         </View>
         {/* Photo of the best crop; tap it to open the zoomable viewer. */}
-        {best ? <CropPhoto crop={cropById(best.cropId)!} size={112} hideIfMissing /> : null}
+        {best ? <CropPhoto crop={cropById(best.cropId)!} size={112} hideIfMissing dark /> : null}
       </View>
 
       {age > STALE_AFTER_DAYS ? <Banner kind="warning">{t('env.stale', { n: age })}</Banner> : null}

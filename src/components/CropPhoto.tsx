@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { type CropProfile, cropName } from '../env/crops';
 import { useI18n } from '../i18n';
-import { isCommonsUpload, loadPhotoCredit, type PhotoCredit } from '../plants/photoCredit';
+import { isCommonsUpload, photoCredit, type PhotoCredit, shortCredit } from '../plants/photoCredit';
 import { colors, radius, spacing } from '../theme/colors';
 import { IconButton, Ionicons, tapFeedback } from './ui';
 
@@ -83,11 +83,38 @@ export function loadCropPhoto(crop: Pick<CropProfile, 'id' | 'scientific' | 'en'
   return p;
 }
 
+/** The photographer and licence of a photo, once Commons has answered. */
+function usePhotoCredit(filePage: string | null | undefined) {
+  const [credit, setCredit] = useState<PhotoCredit | null>(null);
+  useEffect(() => {
+    setCredit(null);
+    if (!filePage) return;
+    let live = true;
+    photoCredit(filePage).then((c) => live && setCredit(c));
+    return () => {
+      live = false;
+    };
+  }, [filePage]);
+  return credit;
+}
+
 /**
- * The photo of a crop; tap it to open the zoomable viewer. `hideIfMissing` leaves no empty
- * box behind when no photo is found (used in the crop screen's header).
+ * The photo of a crop, with its photographer and licence underneath (CC BY and CC BY-SA
+ * need the credit where the photo is shown); tap it to open the zoomable viewer.
+ * `hideIfMissing` leaves no empty box behind when no photo is found, and `dark` is for
+ * photos on a dark background (the crop screen's header).
  */
-export function CropPhoto({ crop, size = 76, hideIfMissing = false }: { crop: CropProfile; size?: number; hideIfMissing?: boolean }) {
+export function CropPhoto({
+  crop,
+  size = 76,
+  hideIfMissing = false,
+  dark = false,
+}: {
+  crop: CropProfile;
+  size?: number;
+  hideIfMissing?: boolean;
+  dark?: boolean;
+}) {
   const { t, language } = useI18n();
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -106,10 +133,12 @@ export function CropPhoto({ crop, size = 76, hideIfMissing = false }: { crop: Cr
     };
   }, [crop]);
 
+  const credit = usePhotoCredit(photo?.filePage);
+
   if (!photo) return hideIfMissing && loaded ? null : <View style={[st.thumb, { width: size, height: size }]} />;
   const name = cropName(crop, language);
   return (
-    <>
+    <View style={{ width: size }}>
       <Pressable
         accessibilityRole="imagebutton"
         accessibilityLabel={t('photo.open', { crop: name })}
@@ -124,8 +153,18 @@ export function CropPhoto({ crop, size = 76, hideIfMissing = false }: { crop: Cr
           <Ionicons name="expand" size={12} color={colors.white} />
         </View>
       </Pressable>
+      {credit ? (
+        <Text
+          style={[st.thumbCredit, { color: dark ? '#d7efe1' : colors.textMuted }]}
+          numberOfLines={2}
+          accessibilityLabel={t('photo.by', { artist: credit.artist ?? '–', licence: credit.licence ?? '–' })}
+          testID={`photo-credit-${crop.id}`}
+        >
+          {shortCredit(credit)}
+        </Text>
+      ) : null}
       {open ? <PhotoViewer photo={photo} title={name} scientific={crop.scientific} onClose={() => setOpen(false)} /> : null}
-    </>
+    </View>
   );
 }
 
@@ -138,18 +177,7 @@ function PhotoViewer({ photo, title, scientific, onClose }: { photo: Photo; titl
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [zoom, setZoom] = useState(1);
-  const [credit, setCredit] = useState<PhotoCredit | null>(null);
-  useEffect(() => {
-    if (!photo.filePage) return;
-    let live = true;
-    loadPhotoCredit(photo.filePage).then(
-      (c) => live && setCredit(c),
-      () => {},
-    );
-    return () => {
-      live = false;
-    };
-  }, [photo.filePage]);
+  const credit = usePhotoCredit(photo.filePage);
   const baseW = width;
   const baseH = Math.min(width * photo.aspect, height * 0.7);
   const fitW = baseH < width * photo.aspect ? baseH / photo.aspect : baseW;
@@ -225,6 +253,7 @@ const st = StyleSheet.create({
   scrollX: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.sm },
   zoomText: { color: colors.white, fontSize: 15, fontWeight: '700', minWidth: 44, textAlign: 'center' },
+  thumbCredit: { fontSize: 9, lineHeight: 11, marginTop: 2 },
   creditBy: { color: colors.white, fontSize: 13, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg },
   credit: { color: '#c7d6cc', fontSize: 12, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg, textDecorationLine: 'underline' },
 });

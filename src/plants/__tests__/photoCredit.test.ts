@@ -1,4 +1,8 @@
-import { isCommonsUpload, loadPhotoCredit, plainText } from '../photoCredit';
+import { fileTitle, isCommonsUpload, loadPhotoCredits, plainText, shortCredit } from '../photoCredit';
+
+const rice = 'https://commons.wikimedia.org/wiki/File:Rice%20field.jpg';
+const maize = 'https://commons.wikimedia.org/wiki/File:maize_cob.jpg';
+const missing = 'https://commons.wikimedia.org/wiki/File:Missing.jpg';
 
 describe('crop photo licences', () => {
   it('accepts only Wikimedia Commons files', () => {
@@ -11,32 +15,37 @@ describe('crop photo licences', () => {
   it('turns Commons metadata HTML into plain text', () => {
     expect(plainText('<a href="//commons.wikimedia.org/wiki/User:Jo">Jo &amp; Sam</a>\n')).toBe('Jo & Sam');
     expect(plainText('<span>Forest &quot;Kim&quot; Starr</span>')).toBe('Forest "Kim" Starr');
+    expect(fileTitle(maize)).toBe('File:maize cob.jpg');
   });
 
-  it('reads the photographer and licence of a file', async () => {
-    let asked = '';
+  it('reads photographers and licences for many files in one request', async () => {
+    const asked: string[] = [];
     const get = (async (url: string) => {
-      asked = url;
+      asked.push(url);
       return {
         ok: true,
         json: async () => ({
           query: {
+            // Commons capitalises the first letter of a file name.
+            normalized: [{ from: 'File:maize cob.jpg', to: 'File:Maize cob.jpg' }],
             pages: {
-              '123': {
+              '1': {
+                title: 'File:Rice field.jpg',
                 imageinfo: [{ extmetadata: { Artist: { value: '<a href="x">IRRI Images</a>' }, LicenseShortName: { value: 'CC BY 2.0' } } }],
               },
+              '2': { title: 'File:Maize cob.jpg', imageinfo: [{ extmetadata: { LicenseShortName: { value: 'Public domain' } } }] },
+              '-1': { title: 'File:Missing.jpg' },
             },
           },
         }),
       };
     }) as unknown as typeof fetch;
-    const credit = await loadPhotoCredit('https://commons.wikimedia.org/wiki/File:Rice%20field.jpg', get);
-    expect(credit).toEqual({ artist: 'IRRI Images', licence: 'CC BY 2.0' });
-    expect(decodeURIComponent(asked)).toContain('titles=File:Rice field.jpg');
-  });
-
-  it('gives nothing when Commons has no metadata', async () => {
-    const get = (async () => ({ ok: true, json: async () => ({ query: { pages: { '-1': {} } } }) })) as unknown as typeof fetch;
-    expect(await loadPhotoCredit('https://commons.wikimedia.org/wiki/File:Missing.jpg', get)).toBeNull();
+    const credits = await loadPhotoCredits([rice, maize, missing], get);
+    expect(asked).toHaveLength(1);
+    expect(credits.get(rice)).toEqual({ artist: 'IRRI Images', licence: 'CC BY 2.0' });
+    expect(credits.get(maize)).toEqual({ artist: null, licence: 'Public domain' });
+    expect(credits.get(missing)).toBeNull();
+    expect(shortCredit(credits.get(rice)!)).toBe('IRRI Images, CC BY 2.0');
+    expect(shortCredit(credits.get(maize)!)).toBe('Public domain');
   });
 });
