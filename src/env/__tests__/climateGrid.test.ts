@@ -9,15 +9,18 @@ describe('NASA POWER rainfall and sunlight grid', () => {
     expect(url).toContain('parameters=PRECTOTCORR');
   });
 
-  it('covers the view with 4° blocks and gives up when zoomed far out', () => {
-    expect(blocksFor([102.5, 10.5, 107.5, 14.5])).toEqual([
-      [100, 8],
-      [104, 8],
-      [100, 12],
-      [104, 12],
-    ]);
-    expect(blocksFor([-180, -80, 180, 80])).toEqual([]);
-    expect(MAX_BLOCKS * BLOCK_DEG).toBeGreaterThan(20);
+  it('covers the view with 4° blocks, nearest the middle first', () => {
+    const blocks = blocksFor([102.5, 10.5, 107.5, 14.5]);
+    expect(blocks).toHaveLength(4);
+    expect(blocks[0]).toEqual([104, 12]);
+  });
+
+  it('still loads the middle of a very wide view', () => {
+    const blocks = blocksFor([60, -10, 150, 40]);
+    expect(blocks).toHaveLength(MAX_BLOCKS);
+    // The block holding the centre (105°E, 15°N) comes first.
+    expect(blocks[0]).toEqual([104, 12]);
+    expect(BLOCK_DEG).toBe(4);
   });
 
   it('reads GeoJSON answers and turns mm/day into mm/year', () => {

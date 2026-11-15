@@ -121,7 +121,9 @@ export const SOIL_OVERLAY: RasterProvider = {
   ],
   tileSize: 256,
   minzoom: 0,
-  maxzoom: 12,
+  // At zoom 10 a pixel is ~150 m, finer than SoilGrids' 250 m; closer in, the map enlarges
+  // these tiles instead of asking ISRIC's slow service for new ones.
+  maxzoom: 10,
   attribution: '<a href="https://soilgrids.org">SoilGrids 2.0</a> (ISRIC, CC BY 4.0)',
 };
 export const SOIL_OVERLAY_LICENCE = 'CC BY 4.0, ISRIC – World Soil Information';
