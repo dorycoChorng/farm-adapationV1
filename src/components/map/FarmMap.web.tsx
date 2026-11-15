@@ -43,7 +43,20 @@ export const FarmMap = forwardRef<FarmMapHandle, FarmMapProps>(function FarmMap(
       onEventRef.current?.(event);
     }
     window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+
+    // The page posts 'ready' once, as soon as its scripts run. If the iframe's scripts run before this listener
+    // exists (seen in iOS in-app browsers such as TikTok's), that message is lost and the map is never initialised — leaving a blank dark screen.
+    // Keep asking until the page answers; it only re-reports 'ready' while it has no map.
+    let tries = 0;
+    const poll = setInterval(() => {
+      if (ready.current || ++tries > 40) clearInterval(poll);
+      else deliver({ type: 'ping' });
+    }, 250);
+
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener('message', onMessage);
+    };
   }, [deliver]);
 
   return (
@@ -52,6 +65,10 @@ export const FarmMap = forwardRef<FarmMapHandle, FarmMapProps>(function FarmMap(
         ref: frame,
         srcDoc: MAP_HTML,
         title: 'map',
+        // Also ask as soon as the page has loaded, in case its 'ready' came before our listener.
+        onLoad: () => {
+          if (!ready.current) deliver({ type: 'ping' });
+        },
         style: { border: 0, width: '100%', height: '100%' },
       })}
     </View>

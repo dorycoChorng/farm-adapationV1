@@ -18,6 +18,8 @@ export interface MapInitConfig {
 
 export type MapCommand =
   | { type: 'init'; config: MapInitConfig }
+  /** Asks the page to report 'ready' again if it has not been initialised (the first 'ready' can be missed on web). */
+  | { type: 'ping' }
   | { type: 'flyTo'; center: LngLat; zoom?: number; duration?: number }
   | { type: 'fitBounds'; bbox: [number, number, number, number]; maxZoom?: number }
   | { type: 'zoomBy'; delta: number }
