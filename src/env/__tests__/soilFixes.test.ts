@@ -80,22 +80,39 @@ describe('salt risk', () => {
 });
 
 describe('soil fixes', () => {
-  it('finds no problems on good soil inland', () => {
-    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 15, soil: { phh2o: 6.4, soc: 15, sand: 40, clay: 30, cec: 15, nitrogen: 1.5 } }));
+  it('finds no problems on good land inland with a good soil test', () => {
+    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 15, test: { ph: 6.4, organicMatterPct: 3, texture: 'loam' } }));
+    expect(plan.problems.filter((p) => !p.id.startsWith('salt'))).toEqual([]);
+  });
+
+  it('gives no soil advice without a soil test, even if old soil maps are saved', () => {
+    // Analyses saved before soil maps were dropped still hold them; they are ignored.
+    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 15, soil: { phh2o: 4.6, soc: 6, sand: 75, clay: 60, cec: 5, nitrogen: 0.5 } }));
     expect(plan.problems.filter((p) => !p.id.startsWith('salt'))).toEqual([]);
   });
 
   it('marks very acid, steep land as not suitable and lists the worst first', () => {
-    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 200, slope: 20, soil: { phh2o: 4.6, soc: 6, sand: 75 } }));
+    const plan = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 200, slope: 20, test: { ph: 4.6, organicMatterPct: 1, texture: 'sandy' } }));
     expect(plan.notSuitable).toBe(true);
     const ids = plan.problems.map((p) => p.id);
     expect(ids).toEqual(expect.arrayContaining(['very-acid', 'steep', 'low-organic', 'sandy']));
     expect(plan.problems[0].severity).toBe('blocker');
     expect(plan.problems.find((p) => p.id === 'very-acid')?.crops).toContain('cassava');
+    expect(plan.problems.find((p) => p.id === 'very-acid')?.measured).toBe(true);
+  });
+
+  it('warns about steep slopes and high ground without any soil test', () => {
+    const ids = (elevation: number, slope: number) => soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation, slope })).problems.map((p) => p.id);
+    expect(ids(15, 10)).toContain('steep');
+    expect(ids(900, 1)).toContain('high-ground');
+    expect(ids(400, 1)).not.toContain('high-ground');
+    const high = soilFixPlan(summary({ lat: 13.1, lon: 103.2, elevation: 1600, slope: 1 })).problems.find((p) => p.id === 'high-ground');
+    expect(high?.severity).toBe('major');
+    expect(high?.crops).toContain('tea');
   });
 
   it('adds the salt problem near the sea', () => {
-    const plan = soilFixPlan(summary({ lat: 10.5, lon: 104.3, elevation: 2, soil: { phh2o: 6.5 } }));
+    const plan = soilFixPlan(summary({ lat: 10.5, lon: 104.3, elevation: 2 }));
     expect(plan.problems.map((p) => p.id)).toContain('salt-high');
     expect(plan.notSuitable).toBe(true);
   });
@@ -104,24 +121,18 @@ describe('soil fixes', () => {
 describe('my soil test', () => {
   const inland = { lat: 13.1, lon: 103.2, elevation: 15 };
 
-  it('replaces the mapped pH and marks the problem as measured', () => {
-    const plan = soilFixPlan(summary({ ...inland, soil: { phh2o: 6.5 }, test: { ph: 4.6 } }));
+  it('gives pH advice only from the entered pH', () => {
+    const plan = soilFixPlan(summary({ ...inland, test: { ph: 4.6 } }));
     const acid = plan.problems.find((p) => p.id === 'very-acid');
     expect(acid?.measured).toBe(true);
     expect(plan.notSuitable).toBe(true);
+    expect(soilFixPlan(summary({ ...inland, test: { ph: 8.4 } })).problems.map((p) => p.id)).toContain('alkaline');
+    expect(soilFixPlan(summary({ ...inland, test: { ph: 6.4 } })).problems.map((p) => p.id)).not.toContain('acid');
   });
 
-  it('clears a mapped problem the test does not confirm', () => {
-    const plan = soilFixPlan(summary({ ...inland, soil: { phh2o: 4.6, soc: 6 }, test: { ph: 6.4, organicMatterPct: 3 } }));
-    expect(plan.problems.map((p) => p.id)).not.toContain('very-acid');
-    expect(plan.problems.map((p) => p.id)).not.toContain('low-organic');
-  });
-
-  it('uses texture by feel instead of mapped sand and clay', () => {
-    const plan = soilFixPlan(summary({ ...inland, soil: { sand: 30, clay: 60 }, test: { texture: 'sandy' } }));
-    const ids = plan.problems.map((p) => p.id);
-    expect(ids).toContain('sandy');
-    expect(ids).not.toContain('heavy-clay');
+  it('uses texture by feel', () => {
+    expect(soilFixPlan(summary({ ...inland, test: { texture: 'sandy' } })).problems.map((p) => p.id)).toContain('sandy');
+    expect(soilFixPlan(summary({ ...inland, test: { texture: 'clay' } })).problems.map((p) => p.id)).toContain('heavy-clay');
   });
 
   it('lets a water EC reading decide the salt level', () => {

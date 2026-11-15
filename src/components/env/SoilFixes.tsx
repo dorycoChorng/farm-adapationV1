@@ -22,7 +22,7 @@ const SALT_STYLE: Record<SaltRisk['level'], { fg: string; bg: string; icon: 'wat
   high: { fg: colors.danger, bg: colors.dangerBg, icon: 'warning' },
 };
 
-/** "Fix the land": the soil and terrain problems found, worst first, each with steps and crops that cope. */
+/** "Fix the land": terrain problems (slope, high ground, wet spots, salt) and, once the farmer enters a soil test, soil problems; worst first, with steps and crops that cope. */
 export function SoilFixesCard({ summary }: { summary: EnvSummary }) {
   const { t } = useI18n();
   const plan = useMemo(() => soilFixPlan(summary), [summary]);
@@ -43,6 +43,11 @@ export function SoilFixesCard({ summary }: { summary: EnvSummary }) {
         plan.problems.map((p) => <Problem key={p.id} problem={p} />)
       ) : (
         <Text style={type.body}>{t('fix.none')}</Text>
+      )}
+      {summary.soilTest ? null : (
+        <Text style={[type.body, { marginTop: spacing.sm }]} testID="fix-no-test">
+          {t('fix.noTest')}
+        </Text>
       )}
       <Text style={[type.small, { marginTop: spacing.sm }]}>{t('fix.testFirst')}</Text>
     </Card>

@@ -160,16 +160,20 @@ export default function CropsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={s.hero}>
-        <Text style={s.heroLabel}>{t('crops.title')}</Text>
-        {best ? (
-          <Text style={s.heroTitle}>
-            {cropEmoji(cropById(best.cropId)!)} {t('crops.bestFit', { crop: cropName(cropById(best.cropId)!, language) })}
-          </Text>
-        ) : (
-          <Text style={s.heroTitle}>{t('crops.noScores')}</Text>
-        )}
-        <Text style={s.heroSub}>{t('crops.basedOn', { date })}</Text>
-        <Text style={s.heroSub}>{t('crops.catalogue', { n: CROPS.length })}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.heroLabel}>{t('crops.title')}</Text>
+          {best ? (
+            <Text style={s.heroTitle}>
+              {cropEmoji(cropById(best.cropId)!)} {t('crops.bestFit', { crop: cropName(cropById(best.cropId)!, language) })}
+            </Text>
+          ) : (
+            <Text style={s.heroTitle}>{t('crops.noScores')}</Text>
+          )}
+          <Text style={s.heroSub}>{t('crops.basedOn', { date })}</Text>
+          <Text style={s.heroSub}>{t('crops.catalogue', { n: CROPS.length })}</Text>
+        </View>
+        {/* Photo of the best crop; tap it to open the zoomable viewer. */}
+        {best ? <CropPhoto crop={cropById(best.cropId)!} size={112} hideIfMissing /> : null}
       </View>
 
       {age > STALE_AFTER_DAYS ? <Banner kind="warning">{t('env.stale', { n: age })}</Banner> : null}
@@ -181,6 +185,15 @@ export default function CropsScreen() {
       <Banner kind="info" icon="school-outline">
         {t('crops.indicative')}
       </Banner>
+      {stored.summary.soilTest?.ph == null ? (
+        <Banner kind="info" icon="flask-outline">
+          {t('crops.noPh')}
+        </Banner>
+      ) : (
+        <Banner kind="success" icon="flask">
+          {t('crops.withPh', { ph: stored.summary.soilTest.ph })}
+        </Banner>
+      )}
 
       <View style={s.searchBox}>
         <Ionicons name="search" size={20} color={colors.primary} />
@@ -725,7 +738,7 @@ function CropCard({
                 <Ionicons name={FACTOR_ICON[f.key]} size={16} color={colors.textMuted} />
                 <Text style={s.factorName}>{t(f.key === 'rain' && monthly ? 'crops.rainCycle' : (`factor.${f.key}` as TranslationKey))}</Text>
                 <Text style={s.factorValue}>
-                  {f.value === null ? t('crops.notAssessed') : `${FACTOR_FORMAT[f.key](f.value)} · ${t(`pos.${f.position}` as TranslationKey)}`}
+                  {f.value === null ? t(f.key === 'ph' ? 'crops.phNotTested' : 'crops.notAssessed') : `${FACTOR_FORMAT[f.key](f.value)} · ${t(`pos.${f.position}` as TranslationKey)}`}
                 </Text>
               </View>
               <RangeBar range={f.range} value={f.value} color={f.score === null ? colors.textFaint : suitabilityColors.high} format={FACTOR_FORMAT[f.key]} />
@@ -829,7 +842,15 @@ function CompareTable({ results }: { results: CropResult[] }) {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.xs },
-  hero: { backgroundColor: colors.primaryDark, borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.sm },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
+  },
   heroLabel: { color: '#bfe3cf', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
   heroTitle: { color: colors.white, fontSize: 19, fontWeight: '700', marginTop: 4 },
   heroSub: { color: '#d7efe1', fontSize: 12, marginTop: 4 },

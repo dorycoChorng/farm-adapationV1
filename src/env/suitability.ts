@@ -83,6 +83,7 @@ export interface SiteValues {
   monthlyTempC: (number | null)[] | null;
   annualRainMm: number | null;
   annualTempC: number | null;
+  /** From the farmer's soil test; null when no pH was entered (pH is then not scored). */
   ph: number | null;
 }
 
@@ -94,8 +95,8 @@ export function siteValues(s: EnvSummary): SiteValues {
     monthlyTempC: c ? c.monthlyTempC : null,
     annualRainMm: c ? c.annualRainMm : null,
     annualTempC: c ? c.annualTempC : null,
-    // The farmer's own test first, then SoilGrids (250 m), then FAO's coarser soil map.
-    ph: s.soilTest?.ph ?? (s.soil.status === 'ok' ? s.soil.data.properties.find((p) => p.key === 'phh2o')?.mean : null) ?? (s.hwsd?.status === 'ok' ? s.hwsd.data.ph : null) ?? null,
+    // Only the farmer's own soil test: without one, crops are scored on rain and temperature.
+    ph: s.soilTest?.ph ?? null,
   };
 }
 
@@ -155,7 +156,8 @@ export function scoreCrop(crop: CropProfile, site: SiteValues): CropResult {
   const score = overall ? overall.score : null;
   let irrigated = best(irrigatedMonths);
   if (!irrigated || score === null || irrigated.score < score + IRRIGATION_GAIN) irrigated = null;
-  const assessed = factors.filter((f) => f.score !== null).length;
+  // pH only counts once the farmer has entered a soil test, so a missing pH doesn't lower confidence.
+  const climateAssessed = factors.filter((f) => f.key !== 'ph' && f.score !== null).length;
   return {
     cropId: crop.id,
     score,
@@ -163,7 +165,7 @@ export function scoreCrop(crop: CropProfile, site: SiteValues): CropResult {
     limiting: overall ? overall.limiting : null,
     factors,
     // Every input is modelled or coarse, so confidence never reaches "high".
-    confidence: assessed === factors.length ? 'medium' : 'low',
+    confidence: climateAssessed === 2 ? 'medium' : 'low',
     cycleMonths: length,
     bestMonth: top && length < 12 ? top.month : null,
     months,

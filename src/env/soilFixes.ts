@@ -3,13 +3,12 @@ import { STEEP_DEG } from './suitability';
 import type { EnvSummary } from './types';
 
 /**
- * What is holding the land back and what a farmer can do about it, from the soil and
- * terrain numbers already in the analysis (SoilGrids first, FAO HWSD where SoilGrids has
- * nothing), the land zones and the salt-risk rating.
+ * What is holding the land back and what a farmer can do about it. Soil problems come
+ * only from the farmer's own soil test (the app no longer predicts soil); terrain
+ * problems come from the elevation model and land zones, and salt from the salt-risk rating.
  *
  * Amounts are common starting points from extension guides for tropical soils, not a
- * prescription: soil maps are modelled at 250 m–1 km, so the advice always says to
- * confirm with a soil test before spending money.
+ * prescription.
  */
 
 export type ProblemId =
@@ -23,6 +22,7 @@ export type ProblemId =
   | 'low-nutrients'
   | 'low-nitrogen'
   | 'steep'
+  | 'high-ground'
   | 'low-spots'
   | 'salt-high'
   | 'salt-medium';
@@ -33,7 +33,7 @@ export type Severity = 'blocker' | 'major' | 'minor';
 export interface SoilProblem {
   id: ProblemId;
   severity: Severity;
-  /** True when the number comes from the farmer's own test, not a soil map. */
+  /** True when the problem comes from the farmer's own soil or water test. */
   measured?: boolean;
   /** The number behind it, for the sentence that explains it (pH, %, g/kg, degrees, share). */
   value: number | null;
@@ -62,6 +62,7 @@ export const COPING_CROPS: Record<ProblemId, string[]> = {
   'low-nutrients': ['cassava', 'cashew', 'mungbean', 'cowpea'],
   'low-nitrogen': ['mungbean', 'cowpea', 'groundnut', 'soybean', 'black-gram'],
   steep: ['cashew', 'mango', 'black-pepper', 'jackfruit'],
+  'high-ground': ['tea', 'coffee-arabica', 'potato', 'cabbage', 'carrot', 'avocado'],
   'low-spots': ['rice', 'taro'],
   'salt-high': ['coconut', 'sorghum', 'cowpea'],
   'salt-medium': ['sorghum', 'cowpea', 'soybean', 'coconut'],
@@ -78,31 +79,6 @@ function testValue(s: EnvSummary, key: 'phh2o' | 'soc'): number | null {
   return t.organicMatterPct === null ? null : omToSocGKg(t.organicMatterPct);
 }
 
-function soilValue(s: EnvSummary, key: 'phh2o' | 'soc' | 'clay' | 'sand' | 'nitrogen' | 'cec'): number | null {
-  if (key === 'phh2o' || key === 'soc') {
-    const measured = testValue(s, key);
-    if (measured !== null) return measured;
-  }
-  const sg = s.soil.status === 'ok' ? s.soil.data.properties.find((p) => p.key === key)?.mean ?? null : null;
-  if (sg !== null) return sg;
-  if (s.hwsd?.status !== 'ok') return null;
-  const h = s.hwsd.data;
-  switch (key) {
-    case 'phh2o':
-      return h.ph;
-    case 'soc':
-      return h.organicCarbonPct === null ? null : h.organicCarbonPct * 10; // % → g/kg
-    case 'clay':
-      return h.clayPct;
-    case 'sand':
-      return h.sandPct;
-    case 'nitrogen':
-      return h.nitrogenGKg;
-    case 'cec':
-      return h.cec;
-  }
-}
-
 /** Thresholds, common in tropical soil fertility guides. */
 export const LIMITS = {
   veryAcidPh: 5.0,
@@ -110,12 +86,9 @@ export const LIMITS = {
   alkalinePh: 8.0,
   /** Soil organic carbon, g/kg (1 % = 10 g/kg). */
   lowSoc: 10,
-  sandyPct: 70,
-  heavyClayPct: 50,
-  /** Cation exchange capacity, cmol(+)/kg. */
-  lowCec: 10,
-  /** Total nitrogen, g/kg. */
-  lowN: 1,
+  /** Elevation, m: above this the tropics get noticeably cooler (about 0.6 °C less per 100 m). */
+  highGroundM: 800,
+  veryHighGroundM: 1500,
 } as const;
 
 export function soilFixPlan(summary: EnvSummary): SoilFixPlan {
@@ -124,34 +97,22 @@ export function soilFixPlan(summary: EnvSummary): SoilFixPlan {
     problems.push({ id, severity, value, crops: COPING_CROPS[id], ...(measured ? { measured } : {}) });
   const test = summary.soilTest;
 
-  const ph = soilValue(summary, 'phh2o');
-  const phMeasured = test?.ph != null;
+  // Soil problems only from the farmer's test, so every one of them is measured.
+  const ph = testValue(summary, 'phh2o');
   if (ph !== null) {
-    if (ph < LIMITS.veryAcidPh) add('very-acid', 'blocker', ph, phMeasured);
-    else if (ph < LIMITS.acidPh) add('acid', 'major', ph, phMeasured);
-    else if (ph > LIMITS.alkalinePh) add('alkaline', 'major', ph, phMeasured);
+    if (ph < LIMITS.veryAcidPh) add('very-acid', 'blocker', ph, true);
+    else if (ph < LIMITS.acidPh) add('acid', 'major', ph, true);
+    else if (ph > LIMITS.alkalinePh) add('alkaline', 'major', ph, true);
   }
-  const soc = soilValue(summary, 'soc');
-  if (soc !== null && soc < LIMITS.lowSoc) add('low-organic', 'major', soc, test?.organicMatterPct != null);
-  if (test?.texture) {
-    // Texture by feel replaces the mapped sand and clay shares.
-    if (test.texture === 'sandy') add('sandy', 'major', null, true);
-    else if (test.texture === 'clay') add('heavy-clay', 'minor', null, true);
-  } else {
-    const sand = soilValue(summary, 'sand');
-    const clay = soilValue(summary, 'clay');
-    if (sand !== null && sand >= LIMITS.sandyPct) add('sandy', 'major', sand);
-    else if (clay !== null && clay >= LIMITS.heavyClayPct) add('heavy-clay', 'minor', clay);
-  }
-  const drainage = summary.hwsd?.status === 'ok' ? summary.hwsd.data.drainage : null;
-  if (drainage === 'P' || drainage === 'VP') add('poor-drainage', 'major', null);
-  const cec = soilValue(summary, 'cec');
-  if (cec !== null && cec < LIMITS.lowCec) add('low-nutrients', 'minor', cec);
-  const n = soilValue(summary, 'nitrogen');
-  if (n !== null && n < LIMITS.lowN) add('low-nitrogen', 'minor', n);
+  const soc = testValue(summary, 'soc');
+  if (soc !== null && soc < LIMITS.lowSoc) add('low-organic', 'major', soc, true);
+  if (test?.texture === 'sandy') add('sandy', 'major', null, true);
+  else if (test?.texture === 'clay') add('heavy-clay', 'minor', null, true);
 
   const slope = summary.terrain.status === 'ok' ? summary.terrain.data.slopeDeg : null;
   if (slope !== null && slope >= STEEP_DEG) add('steep', slope >= 2 * STEEP_DEG ? 'blocker' : 'major', slope);
+  const elevation = summary.terrain.status === 'ok' ? summary.terrain.data.elevationM : null;
+  if (elevation !== null && elevation >= LIMITS.highGroundM) add('high-ground', elevation >= LIMITS.veryHighGroundM ? 'major' : 'minor', elevation);
   if (summary.zones?.status === 'ok') {
     const zs = summary.zones.data.zones;
     const wet = zs.filter((z) => z.kind === 'low' || z.kind === 'wet').length / Math.max(1, zs.length);

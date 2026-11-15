@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CurrencyPicker } from '../components/CurrencyPicker';
-import { BarChart, PhScale, StackedBar } from '../components/env/charts';
+import { BarChart, StackedBar } from '../components/env/charts';
 import { LandBlocked } from '../components/env/LandBlocked';
 import { MonthStrip, SEASON_STYLE, SeasonLegend, useSeasonNow, useSeasonText } from '../components/env/Seasons';
 import { SaltCard, SoilFixesCard } from '../components/env/SoilFixes';
@@ -20,7 +20,6 @@ import {
   Chip,
   EmptyState,
   FadeIn,
-  InfoRow,
   Ionicons,
   type IconName,
   Pill,
@@ -32,20 +31,19 @@ import { getParcel } from '../db/repositories';
 import { ageInDays, analyzeLocation, type SectionKey } from '../env/analyze';
 import { appFetchJson, appFetchRange } from '../env/appFetch';
 import { countryProduction, GAEZ_GROUPS, GAEZ_PRICES, type GaezCode } from '../env/gaez';
-import { hwsdTextureKey } from '../env/hwsd';
-import { LAND_COVER_CLASSES, SOURCES, STALE_AFTER_DAYS } from '../env/sources';
+import { LAND_COVER_CLASSES, STALE_AFTER_DAYS, USED_SOURCES } from '../env/sources';
 import { cropById, cropEmoji, cropName, CROPS } from '../env/crops';
 import { plantNow, type Season, seasonsFor } from '../env/seasons';
 import { soilFixPlan } from '../env/soilFixes';
 import { landCheck, rankCrops, siteValues, siteWarnings } from '../env/suitability';
-import type { EnvSummary, HwsdData, Section, SoilTest, SourceId } from '../env/types';
+import type { EnvSummary, Section, SoilTest, SourceId } from '../env/types';
 import { countryAt } from '../geo/countryAt';
 import { formatCoordinate, formatHectares } from '../geo/format';
 import type { LatLng } from '../geo/types';
 import { useOnline } from '../hooks/useOnline';
 import { useI18n } from '../i18n';
 import { formatDate, localName } from '../i18n/format';
-import { en, type TranslationKey } from '../i18n/en';
+import type { TranslationKey } from '../i18n/en';
 import { formatLargeMoney } from '../money/currency';
 import { useMoney } from '../money/MoneyProvider';
 import { countryByIso3, searchCountries } from '../search/countries';
@@ -63,10 +61,8 @@ interface Target {
 const SECTIONS: { key: SectionKey; icon: IconName; label: TranslationKey }[] = [
   { key: 'climate', icon: 'rainy', label: 'env.step.climate' },
   { key: 'rainHistory', icon: 'bar-chart', label: 'env.step.rainHistory' },
-  { key: 'soil', icon: 'layers', label: 'env.step.soil' },
   { key: 'terrain', icon: 'trending-up', label: 'env.step.terrain' },
   { key: 'landCover', icon: 'leaf', label: 'env.step.landCover' },
-  { key: 'hwsd', icon: 'albums', label: 'env.step.hwsd' },
   { key: 'zones', icon: 'grid', label: 'env.step.zones' },
   { key: 'production', icon: 'stats-chart', label: 'env.step.production' },
 ];
@@ -78,10 +74,8 @@ const PENDING = new WeakSet<object>();
 const SECTION_SOURCE: Record<SectionKey, SourceId> = {
   climate: 'nasa-power',
   rainHistory: 'nasa-power',
-  soil: 'soilgrids',
   terrain: 'aws-terrain',
   landCover: 'esa-worldcover',
-  hwsd: 'hwsd',
   production: 'gaez',
   zones: 'esa-worldcover',
 };
@@ -102,10 +96,8 @@ function liveSummary(target: Target, got: Partial<Record<SectionKey, Section<unk
     createdAt: startedAt,
     climate: pick('climate'),
     rainHistory: pick('rainHistory'),
-    soil: pick('soil'),
     terrain: pick('terrain'),
     landCover: pick('landCover'),
-    hwsd: pick('hwsd'),
     production: pick('production'),
     zones: pick('zones'),
   } as EnvSummary;
@@ -301,7 +293,7 @@ export default function AnalysisScreen() {
         <Card title={t('env.introTitle')} icon="information-circle" iconColor={colors.secondary} iconBg={colors.secondaryLight}>
           <Text style={type.body}>{t('env.introBody')}</Text>
           <View style={{ gap: 6, marginTop: spacing.md }}>
-            {Object.values(SOURCES).map((src) => (
+            {USED_SOURCES.map((src) => (
               <Text key={src.id} style={type.small}>
                 • {src.name} — {src.provider}
               </Text>
@@ -368,7 +360,7 @@ function AtAGlance({ summary, areaText, running, onCrops }: { summary: EnvSummar
         {areaText ? <GlanceStat icon="crop" label={t('glance.area')} value={areaText} /> : null}
         <GlanceStat icon="rainy" label={t('glance.rain')} value={site.annualRainMm === null ? '–' : `${fmt(site.annualRainMm)} mm`} />
         <GlanceStat icon="thermometer" label={t('glance.temp')} value={site.annualTempC === null ? '–' : `${fmt(site.annualTempC, 1)} °C`} />
-        <GlanceStat icon="flask" label={t('glance.ph')} value={site.ph === null ? '–' : fmt(site.ph, 1)} />
+        <GlanceStat icon="flask" label={t('glance.ph')} value={site.ph === null ? t('glance.phNone') : fmt(site.ph, 1)} />
       </View>
       {!running && land.ok ? (
         <>
@@ -660,52 +652,7 @@ function SoilPanel({ summary, onSaveTest }: { summary: EnvSummary; onSaveTest: (
     <>
       <SoilTestCard test={summary.soilTest} onSave={(test) => onSaveTest?.(test)} disabled={!onSaveTest} />
       <SoilFixesCard summary={summary} />
-      <SoilGridsCard summary={summary} />
-      <SoilCompare summary={summary} />
-      <HwsdCard summary={summary} />
     </>
-  );
-}
-
-function SoilGridsCard({ summary }: { summary: EnvSummary }) {
-  const { t } = useI18n();
-  return (
-    <SectionCard title={t('env.soil')} icon="layers" color={colors.soil} bg={colors.soilLight} section={summary.soil} testID="card-soil">
-      {(soil) => {
-        const get = (k: string) => soil.properties.find((p) => p.key === k);
-        const ph = get('phh2o');
-        return (
-          <>
-            <Banner kind="info" icon="flask-outline">
-              {t('env.soilModelled')}
-            </Banner>
-            {ph?.mean != null ? (
-              <View style={{ marginVertical: spacing.sm }}>
-                <BigValue value={ph.mean.toFixed(1)} unit="pH" caption={t('env.phCaption', { depth: soil.depth })} />
-                <PhScale value={ph.mean} low={ph.low} high={ph.high} />
-              </View>
-            ) : null}
-            {soil.textureClass ? (
-              <InfoRow icon="grid-outline" label={t('env.texture')} value={t(`texture.${soil.textureClass}` as TranslationKey)} />
-            ) : null}
-            {soil.properties
-              .filter((p) => p.key !== 'phh2o')
-              .map((p) => (
-                <InfoRow
-                  key={p.key}
-                  label={t(`soil.${p.key}` as TranslationKey)}
-                  value={
-                    p.mean === null
-                      ? '–'
-                      : `${fmt(p.mean, 1)} ${p.unit}${p.low !== null && p.high !== null ? `  (${fmt(p.low, 1)}–${fmt(p.high, 1)})` : ''}`
-                  }
-                />
-              ))}
-            <Text style={[type.small, { marginTop: spacing.xs }]}>{t('env.soilRangeNote')}</Text>
-          </>
-        );
-      }}
-    </SectionCard>
   );
 }
 
@@ -761,60 +708,6 @@ function OldSection({ title, icon }: { title: string; icon: IconName }) {
   return (
     <Card title={title} icon={icon} iconColor={colors.textMuted} iconBg={colors.surfaceAlt}>
       <Text style={type.small}>{t('env.sectionOld')}</Text>
-    </Card>
-  );
-}
-
-const textureLabel = (t: (k: TranslationKey) => string, name: string | null) => {
-  const key = `texture.${hwsdTextureKey(name)}`;
-  return key in en ? t(key as TranslationKey) : (name ?? '–');
-};
-
-/** The second soil estimate: FAO's soil map (bundled for Cambodia and its borders). */
-function HwsdCard({ summary }: { summary: EnvSummary }) {
-  const { t } = useI18n();
-  if (!summary.hwsd) return <OldSection title={t('soil2.title')} icon="albums" />;
-  return (
-    <SectionCard title={t('soil2.title')} icon="albums" color={colors.soil} bg={colors.soilLight} section={summary.hwsd} testID="card-hwsd">
-      {(h: HwsdData) => (
-        <>
-          {h.soil ? (
-            <Text style={[type.body, { fontWeight: '700', marginBottom: spacing.xs }]}>
-              {t('soil2.main', { soil: h.soil, pct: h.sharePct ?? '–' })}
-            </Text>
-          ) : null}
-          {h.ph !== null ? (
-            <View style={{ marginVertical: spacing.sm }}>
-              <BigValue value={h.ph.toFixed(1)} unit="pH" caption={t('soil2.caption')} />
-              <PhScale value={h.ph} low={null} high={null} />
-            </View>
-          ) : null}
-          {h.texture ? <InfoRow icon="grid-outline" label={t('env.texture')} value={textureLabel(t, h.texture)} /> : null}
-          {h.drainage ? <InfoRow icon="water-outline" label={t('soil2.drainage')} value={t(`drain.${h.drainage}` as TranslationKey)} /> : null}
-          <InfoRow label={t('soil2.oc')} value={fmt(h.organicCarbonPct, 2, ' %')} />
-          <InfoRow label={t('soil2.clay')} value={fmt(h.clayPct, 0, ' %')} />
-          <InfoRow label={t('soil2.sand')} value={fmt(h.sandPct, 0, ' %')} />
-          <InfoRow label={t('soil2.silt')} value={fmt(h.siltPct, 0, ' %')} />
-          <InfoRow label={t('soil2.cec')} value={fmt(h.cec, 1, ' cmol/kg')} />
-          <InfoRow label={t('soil2.bsat')} value={fmt(h.baseSaturationPct, 0, ' %')} />
-          <InfoRow label={t('soil2.n')} value={fmt(h.nitrogenGKg, 2, ' g/kg')} />
-        </>
-      )}
-    </SectionCard>
-  );
-}
-
-/** pH from both soil sources side by side, and whether they agree. */
-function SoilCompare({ summary }: { summary: EnvSummary }) {
-  const { t } = useI18n();
-  const a = summary.soil.status === 'ok' ? (summary.soil.data.properties.find((p) => p.key === 'phh2o')?.mean ?? null) : null;
-  const b = summary.hwsd?.status === 'ok' ? summary.hwsd.data.ph : null;
-  if (a === null || b === null) return null;
-  const d = Math.abs(a - b);
-  return (
-    <Card title={t('soil2.compareTitle')} icon="git-compare" iconColor={colors.soil} iconBg={colors.soilLight} testID="card-soil-compare">
-      <Text style={type.body}>{t('soil2.compare', { a: a.toFixed(1), b: b.toFixed(1) })}</Text>
-      <Banner kind={d < 0.5 ? 'success' : 'warning'}>{d < 0.5 ? t('soil2.agree') : t('soil2.differ', { d: d.toFixed(1) })}</Banner>
     </Card>
   );
 }

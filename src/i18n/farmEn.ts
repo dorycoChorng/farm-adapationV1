@@ -58,7 +58,7 @@ export const farmEn = {
   'zones.introParcel': 'Your parcel is split into {rows} × {cols} zones of about {w} × {h} m. Each zone is judged on its own land cover and slope.',
   'zones.introSquare':
     'A {side} m square around the point is split into {rows} × {cols} zones of about {w} × {h} m. Draw your parcel to judge its exact outline.',
-  'zones.sameData': 'Climate and soil maps are coarser (250 m to 55 km), so they are the same for every zone.',
+  'zones.sameData': 'The climate data is coarser (about 55 km), so it is the same for every zone.',
   'zones.usable': '{pct}% of the land can follow the crop advice ({n} of {total} zones).',
   'zones.tap': 'Tap a zone for its details.',
   'zones.zone': 'Zone {n}',
@@ -238,7 +238,8 @@ export const farmEn = {
   'glance.area': 'Area',
   'glance.rain': 'Rain a year',
   'glance.temp': 'Average temperature',
-  'glance.ph': 'Soil pH (model)',
+  'glance.ph': 'Soil pH (your test)',
+  'glance.phNone': 'Not tested',
   'glance.plantNow': 'Good to sow now',
   'glance.noneNow': 'Nothing scores 50 or more for sowing this month or next.',
   'glance.allCrops': 'All crops',
