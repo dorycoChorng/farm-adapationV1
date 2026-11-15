@@ -9,7 +9,11 @@ describe('crop photo licences', () => {
     expect(isCommonsUpload('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Oryza_sativa.jpg/320px-Oryza_sativa.jpg')).toBe(true);
     // Stored on English Wikipedia itself: may be a copyrighted "fair use" image.
     expect(isCommonsUpload('https://upload.wikimedia.org/wikipedia/en/a/ab/Some_logo.png')).toBe(false);
+    // Thumbnails from Wikipedia's summary API come from another wikimedia.org host.
+    expect(isCommonsUpload('https://thumbs.wikimedia.org/wikipedia/commons/thumb/a/ab/Oryza_sativa.jpg/320px-Oryza_sativa.jpg?utm_source=x')).toBe(true);
     expect(isCommonsUpload('https://example.com/wikipedia/commons/x.jpg')).toBe(false);
+    expect(isCommonsUpload('https://wikimedia.org.example.com/wikipedia/commons/x.jpg')).toBe(false);
+    expect(isCommonsUpload('not a url')).toBe(false);
   });
 
   it('turns Commons metadata HTML into plain text', () => {

@@ -5,10 +5,20 @@
  */
 
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
-/** Commons files live under this path; files under /wikipedia/en/ are local to English Wikipedia. */
-const COMMONS_PATH = '//upload.wikimedia.org/wikipedia/commons/';
-
-export const isCommonsUpload = (url: string) => url.includes(COMMONS_PATH);
+/**
+ * A Commons file: served from a wikimedia.org host (upload.wikimedia.org for originals;
+ * Wikipedia's summaries now give thumbnails from another wikimedia.org host) under
+ * /wikipedia/commons/. Files under /wikipedia/en/ are local to English Wikipedia.
+ */
+export function isCommonsUpload(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const wikimedia = u.hostname === 'wikimedia.org' || u.hostname.endsWith('.wikimedia.org');
+    return u.protocol === 'https:' && wikimedia && u.pathname.startsWith('/wikipedia/commons/');
+  } catch {
+    return false;
+  }
+}
 
 export interface PhotoCredit {
   artist: string | null;
