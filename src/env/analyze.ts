@@ -4,7 +4,7 @@ import { climatologyUrl, lastCompleteYear, monthlyRainUrl, parseClimatology, par
 import { readLandCover, readTerrain } from './rasters';
 import { readLocalProduction } from './gaez';
 import { hwsdCovers, readHwsd } from './hwsd';
-import { parseSoilGrids, soilGridsUrl } from './soilgrids';
+import { fetchSoilFromMaps, parseSoilGrids, soilGridsUrl } from './soilgrids';
 import { type FetchRange, fetchRange } from './tiff';
 import type { EnvSummary, Section, SourceId } from './types';
 import { readZones } from './zones';
@@ -12,8 +12,11 @@ import { readZones } from './zones';
 export type FetchJson = (url: string, signal?: AbortSignal, options?: { timeoutMs?: number }) => Promise<unknown>;
 
 const TIMEOUT_MS = 30000;
-/** SoilGrids often takes 20–60 s to answer a multi-property query. */
-const SOIL_TIMEOUT_MS = 90000;
+/**
+ * The SoilGrids REST API often takes 20–60 s and is sometimes down. Past this, the app
+ * reads the same maps from ISRIC's map service instead (means only, no 5–95 % range).
+ */
+const SOIL_TIMEOUT_MS = 30000;
 
 /** An HTTP failure, keeping the status so busy or broken servers can be retried. */
 export class HttpError extends Error {
@@ -132,10 +135,17 @@ export async function analyzeLocation(location: LatLng, ring: LatLng[] | null, d
       'soilgrids',
       now,
       async () => {
-        const body = await withRetry(() => getJson(soilGridsUrl(location), deps.signal, { timeoutMs: SOIL_TIMEOUT_MS }), {
-          signal: deps.signal,
-          sleep: deps.sleep,
-        });
+        let body: unknown;
+        try {
+          body = await withRetry(() => getJson(soilGridsUrl(location), deps.signal, { timeoutMs: SOIL_TIMEOUT_MS }), {
+            attempts: 2,
+            signal: deps.signal,
+            sleep: deps.sleep,
+          });
+        } catch (e) {
+          if (deps.signal?.aborted) throw e;
+          body = await fetchSoilFromMaps(location, getRange);
+        }
         const s = parseSoilGrids(body);
         // SoilGrids returns nulls for water, built-up areas and gaps in the model.
         return s.properties.every((p) => p.mean === null) ? null : s;

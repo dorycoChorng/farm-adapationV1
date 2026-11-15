@@ -911,4 +911,51 @@ describe('analyzeLocation', () => {
     });
     expect(s.soil.status).toBe('no-data');
   });
+
+  // ISRIC's map service answers each layer with a one-pixel GeoTIFF around the point.
+  const soilMapFiles = (p: { latitude: number; longitude: number }, value: (coverage: string) => number): FetchRange => async (url) => {
+    if (!url.startsWith('https://maps.isric.org/')) throw new Error('offline');
+    const coverage = new URL(url).searchParams.get('COVERAGEID')!;
+    const geo = { originX: p.longitude - 0.001, originY: p.latitude + 0.001, size: 0.002 };
+    return buildTiff({ width: 1, height: 1, tile: 16, bits: 16, signed: true, compress: true, geo, pixels: () => value(coverage) });
+  };
+  const restDown: FetchJson = async (u) => {
+    if (u.includes('soilgrids')) throw new HttpError(503, null);
+    throw new Error('x');
+  };
+
+  it('reads soil from the SoilGrids map service when the REST API is down', async () => {
+    const p = { latitude: 11.55, longitude: 104.92 };
+    const mapped: Record<string, number> = { phh2o: 55, soc: 150, clay: 300, sand: 300, silt: 400, nitrogen: 120, cec: 100 };
+    const s = await analyzeLocation(p, null, {
+      fetchJson: restDown,
+      fetchRange: soilMapFiles(p, (c) => mapped[c.split('_')[0]]),
+      sleep: async () => {},
+      now,
+    });
+    expect(s.soil.status).toBe('ok');
+    if (s.soil.status !== 'ok') return;
+    const prop = (k: string) => s.soil.status === 'ok' && s.soil.data.properties.find((x) => x.key === k);
+    expect(prop('phh2o')).toMatchObject({ mean: 5.5, low: null, high: null, unit: 'pH' });
+    expect(prop('nitrogen')).toMatchObject({ mean: 1.2 });
+    expect(s.soil.data.textureClass).toBe('clay-loam');
+  });
+
+  it.each([0, -32768])('treats SoilGrids map gaps (%i, e.g. open sea) as no data', async (gap) => {
+    const p = { latitude: 5, longitude: 100 };
+    const s = await analyzeLocation(p, null, { fetchJson: restDown, fetchRange: soilMapFiles(p, () => gap), sleep: async () => {}, now });
+    expect(s.soil.status).toBe('no-data');
+  });
+
+  it('reports an error, not "no data", when both soil services fail', async () => {
+    const s = await analyzeLocation({ latitude: 1, longitude: 2 }, null, {
+      fetchJson: restDown,
+      fetchRange: async () => {
+        throw new Error('offline');
+      },
+      sleep: async () => {},
+      now,
+    });
+    expect(s.soil).toMatchObject({ status: 'error', reason: 'offline' });
+  });
 });

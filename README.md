@@ -160,6 +160,8 @@ Every push is deployed by Vercel as a web preview (`vercel.json` builds `expo ex
 
 **Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them. For the plant scan, add `PLANTNET_API_KEY` under Settings → Environment Variables.
 
+**Caching on Vercel:** the `/worldcover/`, `/gaez/` and `/soilgrids/` proxies send `CDN-Cache-Control`, so Vercel's CDN keeps each file it has fetched (a year for WorldCover 2021, 30 days for the others) and later visitors get it from the nearest edge instead of from S3, Google Cloud or ISRIC. To clear it after changing a proxy, use the project's Settings → Caches → Purge CDN Cache.
+
 ## Run on Android
 
 ```bash
@@ -228,7 +230,7 @@ The browser tests use `playwright-core` with a system Chromium. Set `CHROMIUM_PA
 | OSM Nominatim (public) | Place search | Free, max 1 request/second, no autocomplete, identifying User-Agent required. **For production, run your own Nominatim or use a commercial geocoder** (set `expo.extra.geocoderBaseUrl`). |
 | AWS Terrain Tiles | Elevation, slope and hillshade | Free (AWS Open Data), attribution required. |
 | NASA POWER | Rainfall, temperature and sunlight | Free, no key. Public domain; credit "NASA POWER Project". |
-| ISRIC SoilGrids 2.0 REST API | Topsoil estimates | Free, no key, CC BY 4.0. The API is a beta service with fair-use limits (a few requests per minute) and is often slow, so the app waits up to 90 s and retries busy (429/5xx) answers twice. For heavy use, host the open SoilGrids rasters yourself. |
+| ISRIC SoilGrids 2.0 REST API | Topsoil estimates | Free, no key, CC BY 4.0. The API is a beta service with fair-use limits (a few requests per minute) and is often slow or down, so the app waits up to 30 s (retrying a busy 429/5xx answer once) and then reads the same maps from ISRIC's map service (`maps.isric.org`, WCS). That gives the topsoil means but not the 5–95% range. For heavy use, host the open SoilGrids rasters yourself. |
 | ESA WorldCover 2021 | Land cover | Free, CC BY 4.0, read from the public AWS bucket. |
 | Natural Earth | Offline outlines, country index and place-name labels | Public domain. |
 | FAO HWSD v2.0 | Second soil estimate (bundled for Cambodia) | Free, CC BY 4.0 (FAO and IIASA). |

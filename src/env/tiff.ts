@@ -221,20 +221,22 @@ async function loadTile(cog: CogInfo, index: number, get: FetchRange): Promise<A
     tileCache.set(key, hit);
     return hit;
   }
-  const promise = (async () => {
-    const offset = cog.tileOffsets[index];
-    const length = cog.tileByteCounts[index];
-    const n = cog.tileWidth * cog.tileHeight;
-    if (!length) return new Array<number>(n).fill(cog.noData ?? 0);
-    const raw = await get(cog.url, offset, offset + length - 1);
-    const bytes =
-      cog.compression === 1 ? new Uint8Array(raw) : cog.compression === 5 ? lzwDecode(new Uint8Array(raw)) : inflate(new Uint8Array(raw));
-    return decodeSamples(bytes, cog);
-  })();
+  const promise = decodeTile(cog, index, get);
   tileCache.set(key, promise);
   promise.catch(() => tileCache.delete(key));
   while (tileCache.size > TILE_CACHE_SIZE) tileCache.delete(tileCache.keys().next().value as string);
   return promise;
+}
+
+async function decodeTile(cog: CogInfo, index: number, get: FetchRange): Promise<ArrayLike<number>> {
+  const offset = cog.tileOffsets[index];
+  const length = cog.tileByteCounts[index];
+  const n = cog.tileWidth * cog.tileHeight;
+  if (!length) return new Array<number>(n).fill(cog.noData ?? 0);
+  const raw = await get(cog.url, offset, offset + length - 1);
+  const bytes =
+    cog.compression === 1 ? new Uint8Array(raw) : cog.compression === 5 ? lzwDecode(new Uint8Array(raw)) : inflate(new Uint8Array(raw));
+  return decodeSamples(bytes, cog);
 }
 
 /** Turn a decompressed tile into sample values, undoing the horizontal predictor. Exported for tests. */
@@ -362,13 +364,23 @@ export function readTile(cog: CogInfo, tx: number, ty: number, get: FetchRange =
   return loadTile(cog, ty * Math.ceil(cog.width / cog.tileWidth) + tx, get);
 }
 
-/** Read one pixel by column/row. Returns null for no-data or out-of-range pixels. */
-export async function readPixel(cog: CogInfo, col: number, row: number, get: FetchRange = fetchRange): Promise<number | null> {
+/**
+ * Read one pixel by column/row. Returns null for no-data or out-of-range pixels.
+ * `cache: false` skips the shared tile cache, for one-off files that would only push useful tiles out.
+ */
+export async function readPixel(
+  cog: CogInfo,
+  col: number,
+  row: number,
+  get: FetchRange = fetchRange,
+  { cache = true }: { cache?: boolean } = {},
+): Promise<number | null> {
   if (col < 0 || row < 0 || col >= cog.width || row >= cog.height) return null;
   const tilesAcross = Math.ceil(cog.width / cog.tileWidth);
   const tx = Math.floor(col / cog.tileWidth);
   const ty = Math.floor(row / cog.tileHeight);
-  const tile = await loadTile(cog, ty * tilesAcross + tx, get);
+  const index = ty * tilesAcross + tx;
+  const tile = await (cache ? loadTile(cog, index, get) : decodeTile(cog, index, get));
   const value = tile[(row - ty * cog.tileHeight) * cog.tileWidth + (col - tx * cog.tileWidth)];
   return cog.noData !== null && value === cog.noData ? null : value;
 }
