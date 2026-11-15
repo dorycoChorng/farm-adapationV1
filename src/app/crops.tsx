@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CropPhoto } from '../components/CropPhoto';
 import { CurrencyPicker } from '../components/CurrencyPicker';
 import { RangeBar, ScoreRing } from '../components/env/charts';
 import { LandBlocked } from '../components/env/LandBlocked';
@@ -11,7 +12,7 @@ import { MonthStrip, SEASON_STYLE, useSeasonNow, useSeasonText } from '../compon
 import { Badge, Banner, Button, Card, Chip, EmptyState, FadeIn, Ionicons, PressableScale, Segmented, tapFeedback } from '../components/ui';
 import { getSummary, recommend, type StoredSummary } from '../db/envRepository';
 import { ageInDays } from '../env/analyze';
-import { cropValue, type CropValue } from '../env/gaez';
+import { cropValue, type CropValue, isCommonCrop } from '../env/gaez';
 import { countryAt } from '../geo/countryAt';
 import {
   CROP_CATEGORIES,
@@ -26,11 +27,12 @@ import {
 } from '../env/crops';
 import { type PlantNowCrop, plantNow, type SeasonalAssessment, type SeasonCropResult, seasonalAssessment, WAIT_GAP } from '../env/seasons';
 import { STALE_AFTER_DAYS } from '../env/sources';
-import { classify, type CropResult, landCheck, rankCrops, siteWarnings } from '../env/suitability';
+import { classify, type CropResult, goodSowMonths, landCheck, monthRuns, rankCrops, siteWarnings } from '../env/suitability';
 import { useI18n } from '../i18n';
 import { useMoney } from '../money/MoneyProvider';
 import { formatDate } from '../i18n/format';
 import type { TranslationKey } from '../i18n/en';
+import { countryByIso3 } from '../search/countries';
 import { colors, radius, spacing, suitabilityColors, type } from '../theme/colors';
 
 const FACTORS: FactorKey[] = ['rain', 'temp', 'ph'];
@@ -60,6 +62,8 @@ export default function CropsScreen() {
   const [open, setOpen] = useState<string | null>(null);
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [limit, setLimit] = useState(PAGE);
+  // The short list of crops farmers in this country actually grow, unless the user asks for all.
+  const [commonOnly, setCommonOnly] = useState(true);
 
   // A plant identified on the scan screen comes back as a search.
   const [seenQ, setSeenQ] = useState(q);
@@ -103,6 +107,7 @@ export default function CropsScreen() {
   // What to sow this month or next, by the phone's date.
   const month = new Date().getMonth();
   const now = useMemo(() => plantNow(results, month, (id) => values.get(id)?.valuePerHa ?? null), [results, month, values]);
+  const common = useMemo(() => new Set(CROPS.filter((c) => isCommonCrop(c, iso3)).map((c) => c.id)), [iso3]);
 
   if (stored === undefined) return <View style={s.screen} />;
   if (stored && !farmland) {
@@ -126,8 +131,10 @@ export default function CropsScreen() {
 
   const age = ageInDays(stored.summary.createdAt, new Date());
   const date = formatDate(stored.summary.createdAt, language);
-  const best = results.find((r) => r.score !== null && r.score > 0);
-  const inFilter = (id: string) => filter === 'all' || cropById(id)?.category === filter;
+  const best = results.find((r) => r.score !== null && r.score > 0 && (!commonOnly || common.has(r.cropId)));
+  const inCategory = (id: string) => filter === 'all' || cropById(id)?.category === filter;
+  const inFilter = (id: string) => inCategory(id) && (!commonOnly || common.has(id));
+  const countryName = iso3 ? (countryByIso3(iso3)?.[language === 'km' ? 'nameKm' : 'name'] ?? countryByIso3(iso3)?.name ?? null) : null;
   const monthly = results.some((r) => r.months.length === 12);
   const view: Mode = (mode === 'seasons' && !seasonal.length) || (mode === 'now' && !monthly) ? 'ranking' : mode;
   const activeSeason = seasonal.find((x) => x.season.id === seasonId) ?? seasonal[0];
@@ -139,7 +146,8 @@ export default function CropsScreen() {
 
   const matches = query.trim()
     ? searchCrops(query)
-        .filter((m) => inFilter(m.crop.id))
+        // A search looks through every crop, not only the common ones.
+        .filter((m) => inCategory(m.crop.id))
         // Among equally good name matches, the better-suited crop first.
         .sort((a, b) => a.rank - b.rank || (byId.get(b.crop.id)?.score ?? -1) - (byId.get(a.crop.id)?.score ?? -1))
     : null;
@@ -205,6 +213,29 @@ export default function CropsScreen() {
         style={{ marginTop: spacing.sm }}
       />
 
+      <View style={s.commonRow} testID="common-toggle">
+        <Chip
+          icon="flag"
+          label={countryName ? t('crops.commonIn', { country: countryName, n: common.size }) : t('crops.commonOnly', { n: common.size })}
+          selected={commonOnly}
+          onPress={() => {
+            setCommonOnly(true);
+            resetPaging();
+          }}
+          testID="crops-common"
+        />
+        <Chip
+          label={t('crops.allCrops', { n: CROPS.length })}
+          selected={!commonOnly}
+          onPress={() => {
+            setCommonOnly(false);
+            resetPaging();
+          }}
+          testID="crops-all"
+        />
+      </View>
+      {commonOnly ? <Text style={[type.small, { marginTop: 4 }]}>{t('crops.commonNote')}</Text> : null}
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipRow} keyboardShouldPersistTaps="handled">
         {(['all', ...CROP_CATEGORIES] as Filter[]).map((c) => (
           <Chip
@@ -254,6 +285,7 @@ export default function CropsScreen() {
           {view === 'now' ? (
             <PlantNowView
               crops={now.filter((c) => inFilter(c.cropId))}
+              results={byId}
               month={month}
               seasonal={seasonal}
               values={values}
@@ -375,6 +407,7 @@ function EarningsView({
 /** Crops to sow this month or next, from the phone's date and the site's month-by-month scores. */
 function PlantNowView({
   crops,
+  results,
   month,
   seasonal,
   values,
@@ -382,6 +415,7 @@ function PlantNowView({
   onMore,
 }: {
   crops: PlantNowCrop[];
+  results: Map<string, CropResult>;
   month: number;
   seasonal: SeasonalAssessment[];
   values: Map<string, CropValue>;
@@ -416,7 +450,7 @@ function PlantNowView({
       {!crops.length ? <EmptyState icon="calendar-outline" title={t('crops.nowNone', { min: 50 })} /> : null}
       {sown.slice(0, limit).map((c, i) => (
         <FadeIn key={c.cropId} delay={Math.min(i, 10) * 40}>
-          <PlantNowCard item={c} value={values.get(c.cropId)} />
+          <PlantNowCard item={c} result={results.get(c.cropId)} value={values.get(c.cropId)} />
         </FadeIn>
       ))}
       <MoreButton left={sown.length - limit} onPress={onMore} />
@@ -424,7 +458,7 @@ function PlantNowView({
         <>
           <Text style={s.nowHead}>{t('crops.nowPerennials')}</Text>
           {perennial.slice(0, 6).map((c) => (
-            <PlantNowCard key={c.cropId} item={c} value={values.get(c.cropId)} />
+            <PlantNowCard key={c.cropId} item={c} result={results.get(c.cropId)} value={values.get(c.cropId)} />
           ))}
         </>
       ) : null}
@@ -432,7 +466,7 @@ function PlantNowView({
   );
 }
 
-function PlantNowCard({ item, value }: { item: PlantNowCrop; value?: CropValue }) {
+function PlantNowCard({ item, result, value }: { item: PlantNowCrop; result?: CropResult; value?: CropValue }) {
   const { t, language } = useI18n();
   const { money } = useMoney();
   const { months } = useSeasonText();
@@ -459,8 +493,34 @@ function PlantNowCard({ item, value }: { item: PlantNowCrop; value?: CropValue }
             ) : null}
           </View>
         </View>
+        <CropPhoto crop={crop} />
       </View>
+      {result ? <SowWindow result={result} perennial={item.yearRound} /> : null}
       <Text style={s.limiting}>{t('crops.cycle', { rain: o.rainMm.toLocaleString('en-US'), n: cycleMonths(crop), temp: o.tempC.toFixed(1) })}</Text>
+    </View>
+  );
+}
+
+/** When to sow: "any month", or the runs of months that score 50 or more, e.g. "November – February, June". */
+function SowWindow({ result, perennial }: { result: CropResult; perennial: boolean }) {
+  const { t } = useI18n();
+  const { months } = useSeasonText();
+  if (result.months.length !== 12) return null;
+  const good = goodSowMonths(result);
+  let text: string;
+  if (perennial) text = good.length ? t('crops.plantAnyTime') : t('crops.sowNoGoodMonth');
+  else if (good.length === 12) text = t('crops.sowAnyMonth');
+  else if (!good.length) text = t('crops.sowNoGoodMonth');
+  else
+    text = t('crops.sowWindow', {
+      months: monthRuns(good)
+        .map(([a, b]) => (a === b ? months[a] : `${months[a]} – ${months[b]}`))
+        .join(', '),
+    });
+  return (
+    <View style={s.sowWindow} testID={`sow-window-${result.cropId}`}>
+      <Ionicons name="calendar-outline" size={15} color={colors.primary} />
+      <Text style={s.sowWindowText}>{text}</Text>
     </View>
   );
 }
@@ -555,6 +615,7 @@ function SeasonCropCard({ result }: { result: SeasonCropResult }) {
             {result.yearRound ? <Badge label={t('season.yearRound')} color={colors.textMuted} /> : null}
           </View>
         </View>
+        <CropPhoto crop={crop} size={64} />
       </View>
       {o ? (
         <>
@@ -639,8 +700,10 @@ function CropCard({
             {value && !value.group ? <Badge label={t('farm.cropBadge', { v: money(value.valuePerHa) })} color={colors.sun} /> : null}
           </View>
         </View>
+        <CropPhoto crop={crop} />
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textFaint} />
       </View>
+      {monthly ? <SowWindow result={result} perennial={result.cycleMonths === 12} /> : null}
       <Text style={s.limiting}>
         {result.score === null
           ? t('crops.notEnough')
@@ -787,6 +850,9 @@ const s = StyleSheet.create({
   valueTrack: { height: 8, borderRadius: 4, backgroundColor: colors.surfaceAlt, overflow: 'hidden' },
   valueFill: { height: 8, borderRadius: 4, backgroundColor: colors.sun },
   chipRow: { gap: spacing.sm, paddingVertical: spacing.sm },
+  commonRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  sowWindow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm },
+  sowWindowText: { flex: 1, fontSize: 13.5, fontWeight: '600', color: colors.primaryDark },
   cropCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
