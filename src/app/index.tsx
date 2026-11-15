@@ -18,7 +18,7 @@ import { useOnline } from '../hooks/useOnline';
 import { useI18n } from '../i18n';
 import { localName } from '../i18n/format';
 import type { Projection } from '../map/bridge';
-import { LAND_COVER_OVERLAY } from '../map/layers';
+import { LAND_COVER_OVERLAY, WATER_FLOW_OVERLAY } from '../map/layers';
 import { cambodia } from '../search/countries';
 import { type Selection, useAppState } from '../state/AppState';
 import { colors, radius, shadow, spacing } from '../theme/colors';
@@ -216,6 +216,13 @@ export default function GlobeScreen() {
         <View style={[s.zoomHint, { top: top + SEARCH_BAR + CHIPS + 8 }]} pointerEvents="none" testID="landcover-zoom-hint">
           <Ionicons name="leaf" size={15} color={colors.white} />
           <Text style={s.zoomHintText}>{t('layers.landcoverZoom')}</Text>
+        </View>
+      ) : null}
+
+      {layers.overlays.waterflow && mapView && mapView.zoom < WATER_FLOW_OVERLAY.minzoom ? (
+        <View style={[s.zoomHint, { top: top + SEARCH_BAR + CHIPS + (layers.overlays.landcover && mapView.zoom < LAND_COVER_OVERLAY.minzoom ? 48 : 8) }]} pointerEvents="none" testID="waterflow-zoom-hint">
+          <Ionicons name="water" size={15} color={colors.white} />
+          <Text style={s.zoomHintText}>{t('layers.waterflowZoom')}</Text>
         </View>
       ) : null}
 

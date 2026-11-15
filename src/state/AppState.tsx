@@ -36,7 +36,7 @@ interface AppStateValue {
 export const DEFAULT_LAYERS: LayerState = {
   // Sub-metre imagery so field edges are visible; Sentinel-2 (open licence) stays selectable.
   base: 'satellite-esri',
-  overlays: { places: true, hillshade: false, boundaries: true, landcover: false },
+  overlays: { places: true, hillshade: false, boundaries: true, landcover: false, waterflow: false },
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);

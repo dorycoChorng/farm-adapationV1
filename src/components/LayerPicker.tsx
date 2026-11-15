@@ -13,10 +13,19 @@ const BASE_ICONS: Record<BaseLayerId, IconName> = {
   outline: 'map-outline',
 };
 
+/** Same colours as the map page's water-flow tiles. */
+const WATER_FLOW_LEGEND: [string, TranslationKey][] = [
+  ['#b3e0ff', 'layers.waterflowSmall'],
+  ['#1e7fd8', 'layers.waterflowStream'],
+  ['#0b4aa8', 'layers.waterflowRiver'],
+  ['#7e57c2', 'layers.waterflowPool'],
+];
+
 const OVERLAY_ICONS: Record<OverlayId, IconName> = {
   places: 'text-outline',
   landcover: 'leaf-outline',
   hillshade: 'triangle-outline',
+  waterflow: 'water-outline',
   boundaries: 'git-network-outline',
 };
 
@@ -74,7 +83,7 @@ export function LayerPicker({
               );
             })}
             <Text style={s.section}>{t('layers.overlays')}</Text>
-            {(['places', 'landcover', 'hillshade', 'boundaries'] as OverlayId[]).map((id) => (
+            {(['places', 'waterflow', 'landcover', 'hillshade', 'boundaries'] as OverlayId[]).map((id) => (
               <View key={id}>
                 <View style={s.switchRow}>
                   <Ionicons name={OVERLAY_ICONS[id]} size={20} color={colors.textMuted} />
@@ -90,6 +99,21 @@ export function LayerPicker({
                 {id === 'places' ? (
                   <View style={s.overlayInfo}>
                     <Text style={s.note}>{t('layers.placesNote')}</Text>
+                  </View>
+                ) : null}
+                {id === 'waterflow' ? (
+                  <View style={s.overlayInfo}>
+                    <Text style={s.note}>{t('layers.waterflowNote')}</Text>
+                    {state.overlays.waterflow ? (
+                      <View style={s.legend}>
+                        {WATER_FLOW_LEGEND.map(([color, key]) => (
+                          <View key={key} style={s.legendItem}>
+                            <View style={[s.swatch, { backgroundColor: color }]} />
+                            <Text style={s.legendText}>{t(key)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
                 ) : null}
                 {id === 'landcover' ? (
