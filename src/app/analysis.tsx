@@ -8,6 +8,7 @@ import { CurrencyPicker } from '../components/CurrencyPicker';
 import { BarChart, PhScale, StackedBar } from '../components/env/charts';
 import { LandBlocked } from '../components/env/LandBlocked';
 import { MonthStrip, SEASON_STYLE, SeasonLegend, useSeasonNow, useSeasonText } from '../components/env/Seasons';
+import { SaltCard, SoilFixesCard } from '../components/env/SoilFixes';
 import { SourceInfo } from '../components/env/SourceInfo';
 import { ZoneGrid } from '../components/env/ZoneGrid';
 import { NetworkBanner } from '../components/NetworkBanner';
@@ -34,6 +35,7 @@ import { hwsdTextureKey } from '../env/hwsd';
 import { LAND_COVER_CLASSES, SOURCES, STALE_AFTER_DAYS } from '../env/sources';
 import { cropById, cropEmoji, cropName, CROPS } from '../env/crops';
 import { plantNow, type Season, seasonsFor } from '../env/seasons';
+import { soilFixPlan } from '../env/soilFixes';
 import { landCheck, rankCrops, siteValues, siteWarnings } from '../env/suitability';
 import type { EnvSummary, HwsdData, Section, SourceId } from '../env/types';
 import { countryAt } from '../geo/countryAt';
@@ -329,6 +331,7 @@ function AtAGlance({ summary, areaText, running, onCrops }: { summary: EnvSummar
   const { t, language } = useI18n();
   const site = siteValues(summary);
   const land = landCheck(summary);
+  const fixes = useMemo(() => soilFixPlan(summary), [summary]);
   const month = new Date().getMonth();
   const now = useMemo(() => {
     if (running || !land.ok) return [];
@@ -339,6 +342,11 @@ function AtAGlance({ summary, areaText, running, onCrops }: { summary: EnvSummar
   return (
     <View style={s.glance} testID="at-a-glance">
       <Text style={s.glanceTitle}>{t('glance.title')}</Text>
+      {!running && fixes.notSuitable ? (
+        <Banner kind="warning" icon="construct">
+          {t('fix.glance', { list: fixes.problems.filter((p) => p.severity === 'blocker').map((p) => t(`fix.p.${p.id}.title` as TranslationKey).toLowerCase()).join(', ') })}
+        </Banner>
+      ) : null}
       <View style={s.glanceRow}>
         {areaText ? <GlanceStat icon="crop" label={t('glance.area')} value={areaText} /> : null}
         <GlanceStat icon="rainy" label={t('glance.rain')} value={site.annualRainMm === null ? '–' : `${fmt(site.annualRainMm)} mm`} />
@@ -633,6 +641,7 @@ function ClimatePanel({ summary }: { summary: EnvSummary }) {
 function SoilPanel({ summary }: { summary: EnvSummary }) {
   return (
     <>
+      <SoilFixesCard summary={summary} />
       <SoilGridsCard summary={summary} />
       <SoilCompare summary={summary} />
       <HwsdCard summary={summary} />
@@ -693,6 +702,7 @@ function LandPanel({ summary }: { summary: EnvSummary }) {
       ) : (
         <OldSection title={t('zones.title')} icon="grid" />
       )}
+      <SaltCard summary={summary} />
       <SectionCard title={t('env.terrain')} icon="trending-up" color={colors.soil} bg={colors.soilLight} section={summary.terrain} testID="card-terrain">
         {(tr) => (
           <View style={s.stats}>
