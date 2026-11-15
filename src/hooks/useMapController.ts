@@ -3,6 +3,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { FarmMapHandle } from '../components/map/types';
 import { appFetchJson, appFetchRange } from '../env/appFetch';
 import { blocksFor, CLIMATE_LAYERS, climateBlock, type ClimateLayer, type GridCell } from '../env/climateGrid';
+
+/** Most grid cells kept on the map per layer (about 50 blocks' worth); the oldest go first. */
+const MAX_CELLS = 4000;
 import { CLIMATE_OVERLAY } from '../map/layers';
 import { landCoverTile, runLength } from '../env/rasters';
 import type { LngLat, MapEvent, ViewState } from '../map/bridge';
@@ -65,20 +68,23 @@ export function useMapController(onMapEvent?: (event: MapEvent) => void) {
     const timer = setTimeout(async () => {
       setClimateBusy(true);
       for (const layer of active) {
-        const cells: GridCell[] = [];
+        // Keep what is already drawn and add each block as it arrives, centre first.
+        const have = new Map((climateSent.current[layer] ?? []).map((c) => [`${c.w},${c.s}`, c]));
         for (const [bx, by] of blocks) {
           try {
-            cells.push(...(await climateBlock(layer, bx, by, (url) => appFetchJson(url))));
+            for (const c of await climateBlock(layer, bx, by, (url) => appFetchJson(url))) have.set(`${c.w},${c.s}`, c);
           } catch {
             // One block missing (offline, rate limit) leaves a gap; it is tried again on the next move.
+            continue;
           }
           if (!live) return;
+          const cells = [...have.values()].slice(-MAX_CELLS);
+          climateSent.current[layer] = cells;
+          ref.current?.send({ type: 'setClimateGrid', layer, cells });
         }
-        climateSent.current[layer] = cells;
-        ref.current?.send({ type: 'setClimateGrid', layer, cells });
       }
       if (live) setClimateBusy(false);
-    }, 500);
+    }, 400);
     return () => {
       live = false;
       clearTimeout(timer);

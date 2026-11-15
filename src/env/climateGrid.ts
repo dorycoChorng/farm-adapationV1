@@ -48,20 +48,29 @@ export function regionalUrl(layer: ClimateLayer, bx: number, by: number): string
   return `${POWER_BASE}/climatology/regional?${q}`;
 }
 
-/** South-west corners of the 4° blocks covering [west, south, east, north]; empty past MAX_BLOCKS. */
+/**
+ * South-west corners of the 4° blocks covering [west, south, east, north], nearest the
+ * middle of the view first and at most MAX_BLOCKS of them, so a wide view still fills
+ * in around its centre (the rest follows as the user pans or zooms).
+ */
 export function blocksFor([w, s, e, n]: [number, number, number, number]): [number, number][] {
   const lat0 = Math.max(-88, Math.floor(s / BLOCK_DEG) * BLOCK_DEG);
-  const lat1 = Math.min(88, Math.floor(n / BLOCK_DEG) * BLOCK_DEG);
+  const lat1 = Math.min(84, Math.floor(n / BLOCK_DEG) * BLOCK_DEG);
   const lon0 = Math.floor(w / BLOCK_DEG) * BLOCK_DEG;
-  const lon1 = Math.floor(e / BLOCK_DEG) * BLOCK_DEG;
-  const out: [number, number][] = [];
+  const lon1 = Math.min(lon0 + 360 - BLOCK_DEG, Math.floor(e / BLOCK_DEG) * BLOCK_DEG);
+  const cx = (w + e) / 2;
+  const cy = (s + n) / 2;
+  const all: { b: [number, number]; d: number }[] = [];
   for (let by = lat0; by <= lat1; by += BLOCK_DEG) {
     for (let bx = lon0; bx <= lon1; bx += BLOCK_DEG) {
-      out.push([((((bx + 180) % 360) + 360) % 360) - 180, by]);
-      if (out.length > MAX_BLOCKS) return [];
+      const d = (bx + BLOCK_DEG / 2 - cx) ** 2 + (by + BLOCK_DEG / 2 - cy) ** 2;
+      all.push({ b: [((((bx + 180) % 360) + 360) % 360) - 180, by], d });
     }
   }
-  return out;
+  return all
+    .sort((a, b) => a.d - b.d)
+    .slice(0, MAX_BLOCKS)
+    .map((x) => x.b);
 }
 
 const cell = (lon: number, lat: number, v: number): GridCell => ({
