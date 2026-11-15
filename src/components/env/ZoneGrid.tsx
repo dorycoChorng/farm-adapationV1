@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { appFetchJson, appFetchRange } from '../../env/appFetch';
 import { LAND_COVER_CLASSES } from '../../env/sources';
 import { readWaterFlow, type WaterFlowMap } from '../../env/waterFlow';
+import { WATER_STYLE, type WaterPathKind } from '../../env/waterStyle';
 import type { LatLng } from '../../geo/types';
 import type { ZoneData, ZoneKind } from '../../env/types';
 import { FARMABLE_ZONES, zoneAt, zoneCells, zoneSummary } from '../../env/zones';
@@ -66,7 +67,7 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
   }, [showWater, waterReady, data, ring]);
   useEffect(() => {
     const flow = showWater && waterReady?.flow ? waterReady.flow : null;
-    mapRef.current?.send({ type: 'setWaterFlow', flow: flow ? { cells: flow.cells, lines: flow.lines } : null });
+    mapRef.current?.send({ type: 'setWaterFlow', flow: flow ? { cells: flow.cells, paths: flow.paths } : null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showWater, waterReady]);
 
@@ -115,7 +116,7 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
         style={[st.waterToggle, showWater && st.waterToggleOn]}
         testID="water-flow-toggle"
       >
-        <Ionicons name="water" size={18} color={showWater ? colors.white : WATER_COLORS[3]} />
+        <Ionicons name="water" size={18} color={showWater ? colors.white : WATER_STYLE.stream.color} />
         <Text style={[st.waterToggleText, showWater && { color: colors.white }]}>{showWater ? t('water.hide') : t('water.show')}</Text>
       </Pressable>
       {showWater ? <WaterLegend state={waterReady} /> : null}
@@ -165,32 +166,83 @@ export function ZoneGrid({ data, ring, height = 300 }: { data: ZoneData; ring: L
   );
 }
 
-/** Same colours as the map page's water-flow layer, from a little run-off (1) to a stream (4). */
-const WATER_COLORS = ['', '#b3e0ff', '#5fb4f2', '#1e7fd8', '#0b4aa8'];
-const POND_COLOR = '#7e57c2';
+const PATH_KINDS: WaterPathKind[] = ['small', 'stream', 'main'];
 
+/**
+ * What the water drawing means, in plain words: one row per kind of path (drawn the same
+ * way as on the map, thin → thick), the spots where water collects, and what to do about it.
+ */
 function WaterLegend({ state }: { state: { flow: WaterFlowMap | null; failed: boolean } | null }) {
   const { t } = useI18n();
   if (!state) return <Text style={[type.small, st.waterBox]}>{t('water.loading')}</Text>;
   if (!state.flow) return <Text style={[type.small, st.waterBox]}>{t('water.error')}</Text>;
   const { flow } = state;
+  const found = new Set(flow.paths.map((p) => p.kind));
+  const pond = Math.round(flow.pondShare * 100);
+  const hasPond = flow.cells.length > 0;
   return (
     <View style={st.waterBox} testID="water-flow-legend">
-      <View style={st.legendItem}>
-        {WATER_COLORS.slice(1).map((c) => (
-          <View key={c} style={[st.swatch, { backgroundColor: c }]} />
-        ))}
-        <Text style={st.legendText}>{t('water.legendRun')}</Text>
+      <Text style={st.waterTitle}>{t('water.title')}</Text>
+      {PATH_KINDS.map((kind) => (
+        <LegendRow
+          key={kind}
+          present={found.has(kind)}
+          title={t(`water.kind.${kind}`)}
+          hint={t(`water.kind.${kind}Hint`)}
+          notHere={t('water.notHere')}
+          testID={`water-kind-${kind}`}
+        >
+          <View style={st.lineSample}>
+            <View style={[st.lineCasing, { height: WATER_STYLE[kind].width + 3 }]} />
+            <View style={[st.lineCore, { height: WATER_STYLE[kind].width, backgroundColor: WATER_STYLE[kind].color }]} />
+            {kind !== 'small' ? <Ionicons name="play" size={10} color={colors.white} style={st.lineArrow} /> : null}
+          </View>
+        </LegendRow>
+      ))}
+      <LegendRow present={hasPond} title={t('water.kind.pond')} hint={t('water.kind.pondHint')} notHere={t('water.notHere')} testID="water-kind-pond">
+        <View style={st.lineSample}>
+          <View style={st.pondSample} />
+        </View>
+      </LegendRow>
+      <Text style={[type.small, { marginTop: 2 }]}>{t('water.arrows')}</Text>
+
+      <View style={st.meaning} testID="water-meaning">
+        <Text style={st.meaningTitle}>{t('water.meaning')}</Text>
+        <Text style={type.body}>{t(flow.biggest ? `water.advice.${flow.biggest}` : 'water.advice.none')}</Text>
+        <Text style={[type.body, { marginTop: 4 }]}>{hasPond ? t('water.advice.pond', { pond: Math.max(pond, 1) }) : t('water.advice.noPond')}</Text>
       </View>
-      <View style={[st.legendItem, { marginTop: 4 }]}>
-        <View style={[st.swatch, { backgroundColor: POND_COLOR }]} />
-        <Text style={st.legendText}>{t('water.legendPond')}</Text>
-      </View>
-      <Text style={[type.body, { marginTop: spacing.xs }]}>
-        {t('water.summary', { run: Math.round(flow.runShare * 100), pond: Math.round(flow.pondShare * 100) })}
-      </Text>
-      <Text style={type.small}>{t(flow.source === 'nasadem' ? 'water.source.nasadem' : 'water.source.aws')}</Text>
+
+      <Text style={[type.small, { marginTop: spacing.xs }]}>{t(flow.source === 'nasadem' ? 'water.source.nasadem' : 'water.source.aws')}</Text>
       <Text style={type.small}>{t('water.note')}</Text>
+    </View>
+  );
+}
+
+function LegendRow({
+  present,
+  title,
+  hint,
+  notHere,
+  testID,
+  children,
+}: {
+  present: boolean;
+  title: string;
+  hint: string;
+  notHere: string;
+  testID: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={[st.waterRow, !present && { opacity: 0.45 }]} testID={testID}>
+      {children}
+      <View style={{ flex: 1 }}>
+        <Text style={st.waterRowTitle}>
+          {title}
+          {present ? '' : ` · ${notHere}`}
+        </Text>
+        <Text style={type.small}>{hint}</Text>
+      </View>
     </View>
   );
 }
@@ -250,6 +302,24 @@ const st = StyleSheet.create({
   waterToggleOn: { backgroundColor: '#1e7fd8' },
   waterToggleText: { fontSize: 14, fontWeight: '700', color: '#1e7fd8' },
   waterBox: { marginTop: spacing.sm, borderRadius: radius.md, backgroundColor: colors.surfaceAlt, padding: spacing.md, gap: 2 },
+  waterTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
+  waterRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 5 },
+  waterRowTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  // A short piece of path drawn like the map: white edge, coloured middle, arrow.
+  lineSample: { width: 44, height: 22, borderRadius: 4, backgroundColor: '#4a6b3a', alignItems: 'center', justifyContent: 'center' },
+  lineCasing: { position: 'absolute', left: 4, right: 4, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.9)' },
+  lineCore: { position: 'absolute', left: 5, right: 5, borderRadius: 5 },
+  lineArrow: { position: 'absolute', right: 15 },
+  pondSample: { width: 30, height: 14, borderRadius: 3, backgroundColor: WATER_STYLE.pond.color, opacity: 0.85 },
+  meaning: {
+    marginTop: spacing.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: WATER_STYLE.stream.color,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
+  },
+  meaningTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 2 },
   chip: { minWidth: 40, minHeight: 40, borderRadius: 20, borderWidth: 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   chipText: { fontSize: 13.5, fontWeight: '700', color: colors.text },
 });

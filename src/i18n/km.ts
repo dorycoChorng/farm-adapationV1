@@ -62,9 +62,9 @@ export const km: Record<TranslationKey, string> = {
   'layers.waterflowNote':
     'កន្លែងដែលទឹកភ្លៀងហូរ និងដក់ គណនាពីរាងដី (NASA SRTM និងទិន្នន័យកម្ពស់ផ្សេងទៀតតាម AWS Terrain Tiles)។ ប្រើបានគ្រប់ទីកន្លែងលើពិភពលោក ពេលពង្រីកដល់កម្រិតស្រុក។ វាគិតតែពីរាងដីប៉ុណ្ណោះ មិនរាប់បញ្ចូលប្រឡាយ ទំនប់ ឬលូទេ ហើយទន្លេធំៗបង្ហាញដូចជាអូរតូចៗ។',
   'layers.waterflowZoom': 'ពង្រីកដើម្បីមើលលំហូរទឹក',
-  'layers.waterflowSmall': 'ទឹកហូរលើដី',
-  'layers.waterflowStream': 'អូរ',
-  'layers.waterflowRiver': 'អូរធំ',
+  'layers.waterflowSmall': 'ផ្លូវទឹកហូរតូច',
+  'layers.waterflowStream': 'អូរក្រោយភ្លៀង',
+  'layers.waterflowRiver': 'ផ្លូវទឹកធំ',
   'layers.waterflowPool': 'ទឹកដក់',
   'layers.hillshade': 'ស្រមោលភូមិសាស្ត្រ',
   'layers.boundaries': 'ព្រំដែនប្រទេស',

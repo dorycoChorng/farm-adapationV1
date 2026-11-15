@@ -215,22 +215,26 @@
           'line-width': ['case', ['get', 'selected'], 3.5, 1.2],
         },
       },
-      // Water flow over the land: blue cells get darker as more land drains through them,
-      // purple marks spots where water pools, and lines show which way it runs.
+      // Water over the land: purple marks spots where water pools, and blue paths show where
+      // rain water runs, thicker and darker as more water joins, with arrows pointing downhill.
+      // Colours and widths match WATER_STYLE in src/env/waterFlow.ts.
       {
         id: 'water-fill',
         type: 'fill',
         source: 'water',
         filter: ['==', ['geometry-type'], 'Polygon'],
+        paint: { 'fill-color': '#8e5cd9', 'fill-opacity': 0.55, 'fill-antialias': false },
+      },
+      {
+        id: 'water-casing',
+        type: 'line',
+        source: 'water',
+        filter: ['==', ['geometry-type'], 'LineString'],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'fill-color': [
-            'case',
-            ['get', 'pond'],
-            '#7e57c2',
-            ['match', ['get', 'level'], 1, '#b3e0ff', 2, '#5fb4f2', 3, '#1e7fd8', '#0b4aa8'],
-          ],
-          'fill-opacity': ['case', ['get', 'pond'], 0.6, ['match', ['get', 'level'], 1, 0.35, 2, 0.5, 3, 0.62, 0.72]],
-          'fill-antialias': false,
+          'line-color': '#ffffff',
+          'line-width': ['match', ['get', 'kind'], 'main', 8.5, 'stream', 6, 4],
+          'line-opacity': 0.85,
         },
       },
       {
@@ -240,9 +244,23 @@
         filter: ['==', ['geometry-type'], 'LineString'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#e3f4ff',
-          'line-width': ['match', ['get', 'level'], 1, 0.8, 2, 1.4, 3, 2.2, 3],
-          'line-opacity': 0.9,
+          'line-color': ['match', ['get', 'kind'], 'main', '#0d47a1', 'stream', '#1e88e5', '#4fc3f7'],
+          'line-width': ['match', ['get', 'kind'], 'main', 5.5, 'stream', 3.5, 2],
+        },
+      },
+      {
+        id: 'water-arrows',
+        type: 'symbol',
+        source: 'water',
+        filter: ['all', ['==', ['geometry-type'], 'LineString'], ['!=', ['get', 'kind'], 'small']],
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 70,
+          'icon-image': 'flow-arrow',
+          'icon-size': ['match', ['get', 'kind'], 'main', 0.75, 0.6],
+          'icon-rotation-alignment': 'map',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       },
       {
@@ -389,13 +407,15 @@
 
   var FLOW_MIN_ZOOM = 10;
   var FLOW_MAX_ZOOM = 14;
+  // Same three kinds as the field view (WATER_STYLE in src/env/waterFlow.ts): small run-off,
+  // stream after rain, main water path. The two smallest levels share the run-off colour.
   var FLOW_SHADES = [
-    [179, 224, 255, 150],
-    [95, 180, 242, 200],
-    [30, 127, 216, 235],
-    [11, 74, 168, 255],
+    [79, 195, 247, 170],
+    [79, 195, 247, 220],
+    [30, 136, 229, 240],
+    [13, 71, 161, 255],
   ];
-  var POOL_RGBA = [126, 87, 194, 110];
+  var POOL_RGBA = [142, 92, 217, 140];
   var POOL_M = 1;
   var demTiles = {};
   var demOrder = [];
@@ -964,26 +984,60 @@
     window.__zones = features.length;
   }
 
-  // Water-flow shading from the app; null clears it.
+  // White arrow with a dark edge, pointing along the line (east = downhill), for the water paths.
+  function addFlowArrow() {
+    if (map.hasImage('flow-arrow')) return;
+    var size = 32;
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(9, 7);
+    ctx.lineTo(25, 16);
+    ctx.lineTo(9, 25);
+    ctx.lineTo(13, 16);
+    ctx.closePath();
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(4, 30, 66, 0.9)';
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    map.addImage('flow-arrow', ctx.getImageData(0, 0, size, size), { pixelRatio: 2 });
+  }
+
+  // Water paths and pooling spots from the app; null clears them. While they show, the
+  // zone colours are faded so the water stands out.
   function setWaterFlow(flow) {
     var features = [];
     if (flow) {
       flow.cells.forEach(function (c) {
         features.push({
           type: 'Feature',
-          properties: { level: c.level, pond: !!c.pond },
+          properties: { pond: true },
           geometry: { type: 'Polygon', coordinates: [c.ring.concat([c.ring[0]])] },
         });
       });
-      flow.lines.forEach(function (l) {
-        features.push({
-          type: 'Feature',
-          properties: { level: l.level },
-          geometry: { type: 'LineString', coordinates: [l.from, l.to] },
+      // Smallest first, so bigger paths draw on top where they meet.
+      var order = { small: 0, stream: 1, main: 2 };
+      flow.paths
+        .slice()
+        .sort(function (a, b) {
+          return order[a.kind] - order[b.kind];
+        })
+        .forEach(function (p) {
+          features.push({
+            type: 'Feature',
+            properties: { kind: p.kind },
+            geometry: { type: 'LineString', coordinates: p.coords },
+          });
         });
-      });
+      addFlowArrow();
     }
     map.getSource('water').setData(fc(features));
+    map.setPaintProperty('zones-fill', 'fill-opacity', flow ? ['case', ['get', 'selected'], 0.4, 0.14] : ['case', ['get', 'selected'], 0.62, 0.38]);
+    map.setPaintProperty('zones-line', 'line-opacity', flow ? 0.45 : 1);
     window.__waterFlow = features.length;
   }
 

@@ -42,12 +42,12 @@ export type MapCommand =
   | { type: 'setLabels'; labels: { at: LngLat; text: string }[] }
   /** Land zones drawn over the imagery; `selected` is the id of the highlighted zone. */
   | { type: 'setZones'; zones: { id: number; ring: LngLat[]; color: string; label: string }[]; selected: number | null }
-  /** Water-flow shading inside the land (cells by how much water runs through, pooling spots, flow lines); null clears it. */
+  /** Water inside the land: pooling spots and downhill water paths (small, stream, main); null clears it. */
   | {
       type: 'setWaterFlow';
       flow: {
         cells: { ring: LngLat[]; level: number; pond: boolean }[];
-        lines: { from: LngLat; to: LngLat; level: number }[];
+        paths: { coords: LngLat[]; kind: 'small' | 'stream' | 'main' }[];
       } | null;
     }
   /** Yearly rainfall (mm) or sunlight (kWh/m²/day) on NASA POWER's 0.5° grid, for the overlay of that name. */

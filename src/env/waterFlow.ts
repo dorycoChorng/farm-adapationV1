@@ -3,6 +3,7 @@ import type { FetchJson } from './analyze';
 import { NASADEM_LAT, nasademUrl, planetaryToken } from './planetary';
 import { cog, demAt, demPixel, pointInRing } from './rasters';
 import { type FetchRange, fetchRange, pixelFor, readPixel } from './tiff';
+import { pathKind, type WaterPathKind } from './waterStyle';
 
 /**
  * Where rain water runs over the land and where it pools, worked out from the shape of
@@ -291,23 +292,45 @@ export interface WaterFlowCell {
   level: number;
   pond: boolean;
 }
-export interface WaterFlowLine {
-  from: [number, number];
-  to: [number, number];
-  level: number;
+/** One stretch of a water path, running downhill from its first point to its last. */
+export interface WaterFlowPath {
+  coords: [number, number][];
+  kind: WaterPathKind;
 }
 export interface WaterFlowMap {
+  /** Pooling spots only (cells where water stands before it overflows). */
   cells: WaterFlowCell[];
-  lines: WaterFlowLine[];
+  /** Connected, smoothed water paths across the land, split where they grow bigger. */
+  paths: WaterFlowPath[];
   source: ElevationGrid['source'];
   /** Share of the land's cells with running water (level ≥ 2) and with pooling water. */
   runShare: number;
   pondShare: number;
+  /** The biggest kind of path on the land, or null when no path forms. */
+  biggest: WaterPathKind | null;
 }
 
-/** Flow shading for the cells inside the land (the parcel, or the bbox when there is none). */
+/** Rounds off the 45° zig-zags of D8 paths (Chaikin), keeping both ends where they are. */
+function smooth(line: [number, number][], rounds = 2): [number, number][] {
+  let pts = line;
+  for (let k = 0; k < rounds && pts.length > 2; k++) {
+    const out: [number, number][] = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i];
+      const [bx, by] = pts[i + 1];
+      if (i > 0) out.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25]);
+      if (i < pts.length - 2) out.push([ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75]);
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  return pts;
+}
+
+/** Water paths and pooling spots for the land (the parcel, or the bbox when there is none). */
 export function waterFlowMap(grid: ElevationGrid, landBbox: [number, number, number, number], ring: LatLng[] | null): WaterFlowMap {
   const { cols, rows, lonEdges, latEdges } = grid;
+  const n = cols * rows;
   const midLat = (latEdges[0] + latEdges[rows]) / 2;
   const cellW = (Math.abs(lonEdges[cols] - lonEdges[0]) / cols) * M_PER_DEG * Math.cos((midLat * Math.PI) / 180);
   const cellH = (Math.abs(latEdges[0] - latEdges[rows]) / rows) * M_PER_DEG;
@@ -318,25 +341,30 @@ export function waterFlowMap(grid: ElevationGrid, landBbox: [number, number, num
     const c = i % cols;
     return [(lonEdges[c] + lonEdges[c + 1]) / 2, (latEdges[r] + latEdges[r + 1]) / 2];
   };
-  const [w, s, e, n] = landBbox;
-  const inside = (p: [number, number]) =>
-    ring && ring.length >= 3 ? pointInRing({ longitude: p[0], latitude: p[1] }, ring) : p[0] >= w && p[0] <= e && p[1] >= s && p[1] <= n;
+  const [w, s, e, nn] = landBbox;
+  const inside = new Uint8Array(n);
+  const level = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (Number.isNaN(grid.z[i])) continue;
+    const p = centre(i);
+    const isIn =
+      ring && ring.length >= 3 ? pointInRing({ longitude: p[0], latitude: p[1] }, ring) : p[0] >= w && p[0] <= e && p[1] >= s && p[1] <= nn;
+    if (isIn) inside[i] = 1;
+    level[i] = flowLevel(acc[i] * cellArea);
+  }
 
   const cells: WaterFlowCell[] = [];
-  const lines: WaterFlowLine[] = [];
   let land = 0;
   let run = 0;
   let pooled = 0;
-  for (let i = 0; i < cols * rows; i++) {
-    if (Number.isNaN(grid.z[i])) continue;
-    const p = centre(i);
-    if (!inside(p)) continue;
+  let top = 0;
+  for (let i = 0; i < n; i++) {
+    if (!inside[i]) continue;
     land++;
-    const level = flowLevel(acc[i] * cellArea);
-    const pond = pondDepth[i] >= POND_M;
-    if (level >= 2) run++;
-    if (pond) pooled++;
-    if (!level && !pond) continue;
+    if (level[i] >= 2) run++;
+    if (level[i] > top) top = level[i];
+    if (pondDepth[i] < POND_M) continue;
+    pooled++;
     const r = Math.floor(i / cols);
     const c = i % cols;
     cells.push({
@@ -346,17 +374,80 @@ export function waterFlowMap(grid: ElevationGrid, landBbox: [number, number, num
         [lonEdges[c + 1], latEdges[r + 1]],
         [lonEdges[c], latEdges[r + 1]],
       ],
-      level,
-      pond,
+      level: level[i],
+      pond: true,
     });
-    if (level && down[i] >= 0) lines.push({ from: p, to: centre(down[i]), level });
   }
+
+  // Which cells get a path. Run-off forms on every slope, and drawing all of it hides the
+  // paths that matter, so only these are drawn:
+  //  - streams and main water paths (level 3 and up);
+  //  - the biggest run-off on the land (a quarter or more of the largest flow);
+  //  - and, going uphill from each of those, the run-off that feeds it most, so each path
+  //    is drawn up to where it starts.
+  // Run-off means level 2 and up; on small or flat land where nothing reaches level 2, level 1.
+  const minLevel = top >= 2 ? 2 : 1;
+  let maxAcc = 0;
+  for (let i = 0; i < n; i++) if (inside[i] && acc[i] > maxAcc) maxAcc = acc[i];
+  const show = new Uint8Array(n);
+  const mainUp = new Int32Array(n).fill(-1);
+  for (let i = 0; i < n; i++) {
+    const j = down[i];
+    if (!inside[i] || j < 0 || !inside[j]) continue;
+    if (mainUp[j] < 0 || acc[i] > acc[mainUp[j]]) mainUp[j] = i;
+  }
+  const seeds: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (inside[i] && level[i] >= minLevel && (level[i] >= 3 || acc[i] >= maxAcc / 4)) {
+      show[i] = 1;
+      seeds.push(i);
+    }
+  }
+  for (const i0 of seeds) {
+    for (let u = mainUp[i0]; u >= 0 && !show[u] && level[u] >= minLevel; u = mainUp[u]) show[u] = 1;
+  }
+  const onPath = (i: number) => show[i] === 1;
+  const fed = new Uint8Array(n);
+  for (let i = 0; i < n; i++) if (onPath(i) && down[i] >= 0) fed[down[i]] = 1;
+  const seen = new Uint8Array(n);
+  const raw: { coords: [number, number][]; level: number }[] = [];
+  // Start at the top of each path; a path that joins one already drawn stops at the join.
+  for (let i0 = 0; i0 < n; i0++) {
+    if (!onPath(i0) || fed[i0]) continue;
+    let cur = i0;
+    let lvl = level[cur];
+    let coords: [number, number][] = [centre(cur)];
+    for (;;) {
+      seen[cur] = 1;
+      const next = down[cur];
+      if (next < 0) break;
+      const a = centre(cur);
+      const b = centre(next);
+      if (!inside[next]) {
+        // Run on to about the edge of the land, then stop.
+        coords.push([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+        break;
+      }
+      coords.push(b);
+      if (seen[next]) break;
+      if (level[next] !== lvl) {
+        raw.push({ coords, level: lvl });
+        coords = [b];
+        lvl = level[next];
+      }
+      cur = next;
+    }
+    if (coords.length >= 2) raw.push({ coords, level: lvl });
+  }
+  const paths: WaterFlowPath[] = raw.map((p) => ({ coords: smooth(p.coords), kind: pathKind(p.level) }));
+
   return {
     cells,
-    lines,
+    paths,
     source: grid.source,
     runShare: land ? run / land : 0,
     pondShare: land ? pooled / land : 0,
+    biggest: top >= minLevel && paths.length ? pathKind(top) : null,
   };
 }
 
