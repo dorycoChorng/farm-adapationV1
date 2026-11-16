@@ -292,19 +292,21 @@ NASA Space Apps asks teams to use only material that is freely and publicly avai
 
 | Source | Used for | Licence |
 | --- | --- | --- |
-| [NASA POWER](https://power.larc.nasa.gov/) (NASA Langley) | Rainfall, temperature, sunlight; rainfall year by year; rainfall and sunlight map layers | Public domain (NASA open data) |
-| [NASADEM](https://planetarycomputer.microsoft.com/dataset/nasadem) (NASA/JPL, via Microsoft Planetary Computer) | Elevation, slope, water flow, land zones, terrain shading | NASA open data |
-| [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (AWS Open Data, SRTM) | Backup elevation | Open data, attribution required |
-| [ESA WorldCover 2021 v200](https://esa-worldcover.org/) | Land cover, zones, farmland check | CC BY 4.0 |
-| [FAO GAEZ v5](https://github.com/un-fao/gaezv5/wiki) (FAO and IIASA, from FAOSTAT) | Crops grown nearby, country farm economy | CC BY 4.0 |
-| FAO ECOCROP, full database as published by [OpenCLIM](https://github.com/OpenCLIM/ecocrop) (UK Centre for Ecology & Hydrology; Brown, Redhead, Pywell and Price, doi:[10.5281/zenodo.10843625](https://doi.org/10.5281/zenodo.10843625)); method after Hijmans, R package Recocrop | Crop rain, temperature and pH ranges | Open Government Licence v3 (OpenCLIM); Recocrop GPL-3 (method only) |
+| [NASA POWER](https://power.larc.nasa.gov/): data obtained from the NASA Langley Research Center (LaRC) POWER Project, funded through the NASA Earth Science / Applied Science Program (climatology and daily API, version 2) | Rainfall, temperature, sunlight; rainfall year by year; rainfall and sunlight map layers | NASA open data, no restrictions |
+| [NASADEM](https://planetarycomputer.microsoft.com/dataset/nasadem): NASA JPL (2020), NASADEM Merged DEM Global 1 arc second V001, doi:[10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001](https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001), via Microsoft Planetary Computer | Elevation, slope, water flow, land zones, terrain shading | NASA open data, no restrictions |
+| [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) by Mapzen (AWS Open Data). SRTM, GMTED2010 and 3DEP terrain data courtesy of the U.S. Geological Survey; ETOPO1 from the U.S. National Oceanic and Atmospheric Administration; other national sources in the [full attribution list](https://github.com/tilezen/joerd/blob/master/docs/attribution.md) | Backup elevation | Open data; attribution as listed |
+| [ESA WorldCover 10 m 2021 v200](https://esa-worldcover.org/): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, doi:[10.5281/zenodo.7254221](https://doi.org/10.5281/zenodo.7254221) | Land cover, zones, farmland check | CC BY 4.0 |
+| FAO & IIASA. 2025. [Global Agro-ecological Zoning version 5 (GAEZ v5)](https://github.com/un-fao/gaezv5/wiki); yields and production for 2020 from FAOSTAT (FAO) | Crops grown nearby, country farm economy | CC BY 4.0 and the [FAO Statistical Database Terms of Use](https://www.fao.org/contact-us/terms/db-terms-of-use/en/). No endorsement by FAO or IIASA is implied. |
+| FAO ECOCROP, full database as published by [OpenCLIM](https://github.com/OpenCLIM/ecocrop): Brown, Redhead, Pywell (UK Centre for Ecology & Hydrology) and Price (University of East Anglia), *EcoCrop Climatic Crop Suitability Scoring*, doi:[10.5281/zenodo.10843625](https://doi.org/10.5281/zenodo.10843625); method after Hijmans, R package Recocrop | Crop rain, temperature and pH ranges | Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/); Recocrop GPL-3 (method only, no code copied) |
 | ECOCROP English names, via the R package [`dismo`](https://cran.r-project.org/package=dismo) | Crop names | GPL-3 |
-| [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX (contains modified Copernicus Sentinel data 2016) | Satellite map | CC BY 4.0 |
+| [Sentinel-2 cloudless - https://s2maps.eu](https://s2maps.eu) by [EOX IT Services GmbH](https://eox.at) (Contains modified Copernicus Sentinel data 2016 & 2017) | Satellite map (2016 edition) | CC BY 4.0 |
 | [Natural Earth](https://www.naturalearthdata.com) | Borders and place names (offline) | Public domain |
-| [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) (data © OpenStreetMap contributors) | Place search | ODbL (data); light use per the usage policy |
+| [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) (data [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright)) | Place search | ODbL (data); light use per the [usage policy](https://operations.osmfoundation.org/policies/nominatim/) |
 | [Wikimedia Commons](https://commons.wikimedia.org), via Wikipedia | Crop photos (Commons files only; each photo's author and licence shown with it) | CC BY, CC BY-SA, CC0, public domain |
 | [currency-api](https://github.com/fawazahmed0/exchange-api) and [country-to-currency](https://www.npmjs.com/package/country-to-currency) | Exchange rates, currency per country | CC0; MIT |
 | Expo, React Native, Expo Router; MapLibre GL JS; react-native-webview; GeographicLib; pako; @vercel/analytics | App, map, measuring, file reading, hosting | MIT; BSD-3-Clause; MIT; MIT; MIT and Zlib; MIT |
+
+The full licence text and copyright notice of every open-source package in the app is published with the website at [`/third-party-licenses.txt`](https://farm-adapationv1.vercel.app/third-party-licenses.txt), made at build time by [`scripts/build-licenses.mjs`](scripts/build-licenses.mjs). MIT, BSD and Zlib licences ask that these notices go along with every copy of the software.
 
 The farmer's own soil test is the only soil data in the analysis; it stays on the device.
 

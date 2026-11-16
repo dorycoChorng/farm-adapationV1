@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { NetworkBanner } from '../components/NetworkBanner';
 import { Banner, Button, Chip, type IconName, Ionicons, PressableScale, styles as ui } from '../components/ui';
@@ -175,7 +175,16 @@ export default function SearchScreen() {
           </PressableScale>
         )}
         ListFooterComponent={
-          results?.some((r) => r.source === 'nominatim') ? <Text style={ui.muted}>{t('search.attribution')}</Text> : undefined
+          results?.some((r) => r.source === 'nominatim') ? (
+            // OpenStreetMap asks for a link to its copyright page with the credit.
+            <Text
+              accessibilityRole="link"
+              onPress={() => Linking.openURL('https://www.openstreetmap.org/copyright')}
+              style={[ui.muted, { textDecorationLine: 'underline' }]}
+            >
+              {t('search.attribution')}
+            </Text>
+          ) : undefined
         }
       />
     </View>

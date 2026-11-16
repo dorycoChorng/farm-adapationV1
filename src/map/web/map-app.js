@@ -113,7 +113,7 @@
 
   function buildStyle(cfg) {
     var sources = {
-      world: { type: 'geojson', data: window.__WORLD__, attribution: 'Natural Earth' },
+      world: { type: 'geojson', data: window.__WORLD__, attribution: '<a href="https://www.naturalearthdata.com">Natural Earth</a>' },
       'terrain-dem': {
         type: 'raster-dem',
         tiles: cfg.terrain.tiles,
@@ -126,7 +126,7 @@
       zones: { type: 'geojson', data: fc([]) },
       'climate-rainfall': { type: 'geojson', data: fc([]), attribution: cfg.climate.attribution },
       'climate-sunlight': { type: 'geojson', data: fc([]), attribution: cfg.climate.attribution },
-      water: { type: 'geojson', data: fc([]), attribution: 'NASADEM (NASA/JPL) via Microsoft Planetary Computer' },
+      water: { type: 'geojson', data: fc([]), attribution: cfg.terrain.attribution },
       ring: { type: 'geojson', data: fc([]) },
       waterflow: {
         type: 'raster',

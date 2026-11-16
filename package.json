@@ -54,6 +54,7 @@
     "test:map": "node --test scripts/test-map.mjs",
     "typecheck": "tsc --noEmit",
     "build:map": "node scripts/build-map-html.mjs",
+    "build:licenses": "node scripts/build-licenses.mjs dist",
     "postinstall": "node scripts/build-map-html.mjs",
     "test:web": "expo export --platform web --output-dir dist && node --test scripts/test-app-web.mjs",
     "test:all": "npm test && npm run test:map && npm run test:web",

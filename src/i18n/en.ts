@@ -166,6 +166,7 @@ export const en = {
   'credits.open': 'Sources and credits',
   'credits.intro': 'Every outside source this app uses, what it is used for and its licence. All are free and openly licensed or public domain. Tap one to open its website.',
   'credits.licence': 'This app’s own code is open source under the Apache License 2.0.',
+  'credits.licenceTexts': 'Full licence texts of the open-source software',
   'credits.group.data': 'Data for the land analysis and crop advice',
   'credits.group.map': 'Map',
   'credits.group.media': 'Photos, prices and currencies',
