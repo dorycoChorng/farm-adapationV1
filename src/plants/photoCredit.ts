@@ -23,6 +23,22 @@ export function isCommonsUpload(url: string): boolean {
 export interface PhotoCredit {
   artist: string | null;
   licence: string | null;
+  /** Link to the licence text (none for public domain). */
+  licenceUrl: string | null;
+}
+
+/**
+ * The Commons page of a file (photographer, licence, full size), from the file's address.
+ * Wikipedia adds tracking text (?utm_source=…) to its photo addresses, so the file name
+ * is read from the path only, never from the whole address.
+ */
+export function commonsFilePage(fileUrl: string): string | null {
+  try {
+    const name = decodeURIComponent(new URL(fileUrl).pathname.split('/').pop() ?? '');
+    return name ? `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(name.replace(/ /g, '_'))}` : null;
+  } catch {
+    return null;
+  }
 }
 
 /** HTML from Commons' metadata as plain text: tags removed, common entities decoded. */
@@ -57,7 +73,7 @@ export async function loadPhotoCredits(filePages: string[], get: typeof fetch = 
   for (let i = 0; i < filePages.length; i += BATCH) {
     const pages = filePages.slice(i, i + BATCH);
     const titles = pages.map(fileTitle);
-    const url = `${COMMONS_API}?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&iiextmetadatafilter=Artist|LicenseShortName&titles=${encodeURIComponent(titles.join('|'))}`;
+    const url = `${COMMONS_API}?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&iiextmetadatafilter=Artist|LicenseShortName|LicenseUrl&titles=${encodeURIComponent(titles.join('|'))}`;
     const res = await get(url, { headers: { Accept: 'application/json' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = (await res.json()) as CommonsPages;
@@ -68,7 +84,9 @@ export async function loadPhotoCredits(filePages: string[], get: typeof fetch = 
       const meta = byTitle.get(renamed.get(titles[k]) ?? titles[k]);
       const artist = meta?.Artist?.value ? plainText(meta.Artist.value) : '';
       const licence = meta?.LicenseShortName?.value ? plainText(meta.LicenseShortName.value) : '';
-      out.set(page, artist || licence ? { artist: artist || null, licence: licence || null } : null);
+      const link = meta?.LicenseUrl?.value ? plainText(meta.LicenseUrl.value) : '';
+      const licenceUrl = /^https?:\/\//.test(link) ? link.replace(/^http:/, 'https:') : null;
+      out.set(page, artist || licence ? { artist: artist || null, licence: licence || null, licenceUrl } : null);
     });
   }
   return out;

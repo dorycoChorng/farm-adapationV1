@@ -1,4 +1,4 @@
-import { fileTitle, isCommonsUpload, loadPhotoCredits, plainText, shortCredit } from '../photoCredit';
+import { commonsFilePage, fileTitle, isCommonsUpload, loadPhotoCredits, plainText, shortCredit } from '../photoCredit';
 
 const rice = 'https://commons.wikimedia.org/wiki/File:Rice%20field.jpg';
 const maize = 'https://commons.wikimedia.org/wiki/File:maize_cob.jpg';
@@ -35,7 +35,15 @@ describe('crop photo licences', () => {
             pages: {
               '1': {
                 title: 'File:Rice field.jpg',
-                imageinfo: [{ extmetadata: { Artist: { value: '<a href="x">IRRI Images</a>' }, LicenseShortName: { value: 'CC BY 2.0' } } }],
+                imageinfo: [
+                  {
+                    extmetadata: {
+                      Artist: { value: '<a href="x">IRRI Images</a>' },
+                      LicenseShortName: { value: 'CC BY 2.0' },
+                      LicenseUrl: { value: 'http://creativecommons.org/licenses/by/2.0' },
+                    },
+                  },
+                ],
               },
               '2': { title: 'File:Maize cob.jpg', imageinfo: [{ extmetadata: { LicenseShortName: { value: 'Public domain' } } }] },
               '-1': { title: 'File:Missing.jpg' },
@@ -46,10 +54,19 @@ describe('crop photo licences', () => {
     }) as unknown as typeof fetch;
     const credits = await loadPhotoCredits([rice, maize, missing], get);
     expect(asked).toHaveLength(1);
-    expect(credits.get(rice)).toEqual({ artist: 'IRRI Images', licence: 'CC BY 2.0' });
-    expect(credits.get(maize)).toEqual({ artist: null, licence: 'Public domain' });
+    expect(credits.get(rice)).toEqual({ artist: 'IRRI Images', licence: 'CC BY 2.0', licenceUrl: 'https://creativecommons.org/licenses/by/2.0' });
+    expect(credits.get(maize)).toEqual({ artist: null, licence: 'Public domain', licenceUrl: null });
     expect(credits.get(missing)).toBeNull();
     expect(shortCredit(credits.get(rice)!)).toBe('IRRI Images, CC BY 2.0');
     expect(shortCredit(credits.get(maize)!)).toBe('Public domain');
+  });
+
+  it('links to the real Commons page even when the photo address has tracking text', () => {
+    // Wikipedia's summary API adds ?utm_… to photo addresses; it must not end up in the file name.
+    expect(commonsFilePage('https://upload.wikimedia.org/wikipedia/commons/9/9a/Rice%20field%20(1).jpg?utm_source=en.wikipedia.org&utm_campaign=x')).toBe(
+      'https://commons.wikimedia.org/wiki/File:Rice_field_(1).jpg',
+    );
+    expect(commonsFilePage('https://thumbs.wikimedia.org/wikipedia/commons/a/ab/Mango.jpg')).toBe('https://commons.wikimedia.org/wiki/File:Mango.jpg');
+    expect(commonsFilePage('not a url')).toBeNull();
   });
 });

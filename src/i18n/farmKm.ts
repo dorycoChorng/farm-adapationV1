@@ -53,7 +53,9 @@ export const farmKm: Record<keyof typeof farmEn, string> = {
   'photo.zoomIn': 'ពង្រីក',
   'photo.zoomOut': 'បង្រួម',
   'photo.by': 'រូបថត៖ {artist} · {licence}',
-  'photo.credit': 'ពី Wikimedia Commons តាមរយៈ Wikipedia ({article}) · ចុចដើម្បីមើលឯកសារ អ្នកថត និងអាជ្ញាប័ណ្ណ',
+  'photo.byLabel': 'រូបថត៖',
+  'photo.fileLink': 'ទំព័ររូបថតនៅ Wikimedia Commons',
+  'photo.articleLink': 'Wikipedia៖ {article}',
   'zones.title': 'តំបន់ដី',
   'zones.introParcel': 'ដីរបស់អ្នកត្រូវបានចែកជា {rows} × {cols} តំបន់ ទំហំប្រហែល {w} × {h} ម៉ែត្រ។ តំបន់នីមួយៗត្រូវបានវាយតម្លៃតាមគម្របដី និងជម្រាលរបស់វា។',
   'zones.introSquare':

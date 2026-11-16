@@ -51,7 +51,9 @@ export const farmEn = {
   'photo.zoomIn': 'Zoom in',
   'photo.zoomOut': 'Zoom out',
   'photo.by': 'Photo: {artist} · {licence}',
-  'photo.credit': 'From Wikimedia Commons, via Wikipedia ({article}) · tap to see the file, author and licence',
+  'photo.byLabel': 'Photo:',
+  'photo.fileLink': 'Photo page on Wikimedia Commons',
+  'photo.articleLink': 'Wikipedia: {article}',
   'zones.title': 'Land zones',
   'zones.introParcel': 'Your parcel is split into {rows} × {cols} zones of about {w} × {h} m. Each zone is judged on its own land cover and slope.',
   'zones.introSquare':
