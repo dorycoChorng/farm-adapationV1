@@ -99,7 +99,7 @@ export const CREDITS: Credit[] = [
     url: 'https://commons.wikimedia.org',
   },
   { id: 'currency', group: 'media', name: 'Exchange rates (currency-api)', by: 'Fawaz Ahmed', licence: 'CC0', url: 'https://github.com/fawazahmed0/exchange-api' },
-  { id: 'countrycurrency', group: 'media', name: 'country-to-currency', by: 'Open-source package', licence: 'MIT', url: 'https://www.npmjs.com/package/country-to-currency' },
+  { id: 'countrycurrency', group: 'media', name: 'country-to-currency', by: 'Thiago Delgado Pinto', licence: 'MIT', url: 'https://www.npmjs.com/package/country-to-currency' },
 
   // Open-source software the app is built with.
   { id: 'expo', group: 'software', name: 'Expo, React Native, Expo Router', by: 'Expo and Meta', licence: 'MIT', url: 'https://expo.dev' },

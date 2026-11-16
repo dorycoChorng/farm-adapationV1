@@ -63,6 +63,41 @@ for (const [key, info] of Object.entries(lock.packages ?? {})) {
   const licence = (typeof pkg.license === 'string' ? pkg.license : pkg.license?.type) ?? info.license ?? 'see package';
   entries.push({ id, licence, author: personName(pkg.author), repo: typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url ?? '', texts: licenceTexts(dir) });
 }
+// Code or data copied into the app at build time rather than installed from npm.
+const MIT_TEXT = `Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.`;
+const COPIED = [
+  {
+    id: 'country-to-currency (country → currency table in src/data/currencies.json)',
+    licence: 'MIT',
+    author: 'Thiago Delgado Pinto',
+    repo: 'https://www.npmjs.com/package/country-to-currency',
+    texts: [`MIT License\n\nCopyright (c) Thiago Delgado Pinto\n\n${MIT_TEXT}`],
+  },
+  {
+    id: '@fawazahmed0/currency-api (exchange rates in src/data/currencies.json)',
+    licence: 'CC0-1.0',
+    author: 'Fawaz Ahmed',
+    repo: 'https://github.com/fawazahmed0/exchange-api',
+    texts: ['Released to the public domain under CC0 1.0 Universal; no notice is required. Credited anyway.'],
+  },
+];
+for (const e of COPIED) if (!seen.has(e.id)) entries.push(e);
 entries.sort((a, b) => a.id.localeCompare(b.id));
 
 const rule = '-'.repeat(78);
