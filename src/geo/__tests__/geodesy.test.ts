@@ -3,10 +3,9 @@ import {
   geodesicMidpoint,
   measureParcel,
   normalizeRing,
-  pathLengthMeters,
   segmentsOf,
 } from '../geodesy';
-import { formatHectares, formatLatLng, parseCoordinatePair } from '../format';
+import { formatCoordinate, formatHectares, parseCoordinatePair } from '../format';
 import { isSelfIntersecting, validateParcelRing } from '../polygon';
 import type { LatLng } from '../types';
 
@@ -172,7 +171,6 @@ describe('perimeter and segments', () => {
   it('lists open-path segments without a closing edge', () => {
     const r = rectangle(11.5, 104.9, 0.001, 0.001);
     expect(segmentsOf(r, false)).toHaveLength(3);
-    expect(pathLengthMeters(r)).toBeLessThan(measureParcel(r).perimeterMeters);
   });
 });
 
@@ -236,7 +234,8 @@ describe('polygon validation', () => {
 
 describe('formatting and parsing', () => {
   it('formats hemispheres', () => {
-    expect(formatLatLng({ latitude: -1.5, longitude: -70.25 }, 2)).toBe('1.50° S, 70.25° W');
+    expect(formatCoordinate(-1.5, 'N', 'S', 2)).toBe('1.50° S');
+    expect(formatCoordinate(-70.25, 'E', 'W', 2)).toBe('70.25° W');
   });
 
   it('formats hectares with sensible precision', () => {

@@ -4,7 +4,6 @@ import type { farmEn } from './farmEn';
 export const farmKm: Record<keyof typeof farmEn, string> = {
   'env.step.production': 'ដំណាំដែលដាំនៅជិតនេះ (FAO GAEZ)',
   'env.step.zones': 'តំបន់នៅលើដី',
-  'env.tab.zones': 'តំបន់',
   'env.tab.farming': 'កសិកម្ម',
   'src.gaez.limits':
     'ស្ថិតិជាតិត្រូវបានចែកលើដីដាំដុះដោយម៉ូដែល ដូច្នេះដំណាំក្នុងក្រឡា 10 គីឡូម៉ែត្រមួយ ជាការប៉ាន់ស្មាន។ តម្លៃប្រើតម្លៃអន្តរជាតិថេររបស់ FAO មិនមែនតម្លៃទីផ្សារក្នុងស្រុកទេ ហើយមិនបានដកចំណាយទេ។',

@@ -259,7 +259,7 @@ How it works:
 
 ## Zones and farm economy
 
-<img src="docs/screenshots/globe-cambodia.png" width="240" alt="Home with Measure land"> <img src="docs/screenshots/measure-to-crops.png" width="240" alt="Your land at a glance">
+<img src="docs/screenshots/globe-cambodia.png" width="240" alt="Home with Measure land">
 
 
 - **Land zones** (`src/env/zones.ts`, Land tab): the parcel's bounding box, or a 400 m square around a point, is split into zones at least 40 m across (up to 6 × 6). Each zone samples 3 × 3 WorldCover points inside the parcel and the elevation at its centre. A zone at least 2 m lower than the middle zone is a low spot. Only cropland, open land, low spots and wetland count as land where crop advice applies. Climate is too coarse to differ between zones, so it is not repeated per zone.

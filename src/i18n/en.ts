@@ -9,10 +9,8 @@ export const en = {
   'nav.globe': 'Globe',
   'nav.search': 'Search places',
   'nav.myLocation': 'My Location',
-  'nav.localMap': 'Local satellite map',
   'nav.draw': 'Draw and measure farmland',
   'nav.saved': 'Saved places and parcels',
-  'nav.offline': 'Offline data',
 
   'common.save': 'Save',
   'common.cancel': 'Cancel',
@@ -30,7 +28,6 @@ export const en = {
   'net.offline': 'You are offline. Saved places and parcels still work; satellite imagery and place search need internet.',
   'map.tileError': 'Some map imagery could not load. Check your connection; country outlines still work offline.',
 
-  'globe.searchPlaceholder': 'Search country, province, district, commune or place',
   'globe.cambodia': 'Go to Cambodia',
   'globe.layers': 'Layers',
   'globe.flat': 'Flat map',

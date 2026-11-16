@@ -15,7 +15,7 @@ import { CROPS, type CropProfile, cropById, cycleMonths, searchCrops } from '../
 import { lastCompleteYear, parseClimatology, parseMonthlyRain, toKwhPerDay } from '../power';
 import { demCellSize, demPixel, hornSlope, landCoverTile, pointInRing, runLength, samplePoints, worldCoverTileUrl } from '../rasters';
 import { bundledLocalProduction, cellAreaHa, countryProduction, fetchLocalProduction, gaezCodeFor } from '../gaez';
-import { plantNow, seasonalAssessment, seasonOf, seasonsFor } from '../seasons';
+import { plantNow, seasonalAssessment, seasonsFor } from '../seasons';
 import { classify, factorScore, landCheck, rankCrops, scoreCrop, siteWarnings } from '../suitability';
 import { clearTileCache, decodeSamples, type FetchRange, lzwDecode, openCog, pixelFor, RasterNotFoundError, readPixel } from '../tiff';
 import type { EnvSummary } from '../types';
@@ -552,9 +552,9 @@ describe('seasons', () => {
     const early = { ...thirsty, id: 'early', needs: { ...thirsty.needs, rain: { absMin: 100, optMin: 300, optMax: 1500, absMax: 2500 } } };
     const results = rankCrops(summary, [thirsty, early]);
     const seasons = seasonsFor(summary.location, climateOf(summary));
-    // May is in the wet season (May–October).
-    expect(seasonOf(seasons, 4)?.kind).toBe('wet');
-    expect(seasonOf(seasons, 0)?.kind).toBe('dry');
+    // May is in the wet season (May–October), January in the dry season.
+    expect(seasons.find((x) => x.months.includes(4))?.kind).toBe('wet');
+    expect(seasons.find((x) => x.months.includes(0))?.kind).toBe('dry');
     // May or June: thirsty is best sown in June (100); early scores 100 in May already.
     const may = plantNow(results, 4, (id) => (id === 'early' ? 1000 : 500));
     expect(may.map((c) => [c.cropId, c.option.month, c.option.score, c.irrigated])).toEqual([

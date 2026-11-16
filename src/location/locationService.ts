@@ -73,11 +73,6 @@ export function permissionStateOf(response: ExpoLocation.LocationPermissionRespo
   return response.canAskAgain ? { status: 'denied' } : { status: 'blocked' };
 }
 
-/** Reads the current permission without prompting. */
-export async function checkPermission(api: LocationApi = ExpoLocation): Promise<PermissionState> {
-  return permissionStateOf(await api.getForegroundPermissionsAsync());
-}
-
 /**
  * Prompts for foreground ("while using the app") permission only when the OS will
  * still show a prompt. Never requests background location.

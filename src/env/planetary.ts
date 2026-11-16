@@ -10,8 +10,6 @@ import type { FetchJson } from './analyze';
 /** NASADEM cloud-optimised GeoTIFFs: 1°×1° tiles at 1 arc-second, named by their south-west corner. */
 export const NASADEM_BASE = 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/v001/';
 export const PC_SAS_URL = 'https://planetarycomputer.microsoft.com/api/sas/v1/token/nasademeuwest/nasadem-cog';
-/** Data API (tiles, mosaics); the web build reaches it through /pc-data/ on its own origin. */
-export const PC_DATA_API = 'https://planetarycomputer.microsoft.com/api/data/v1/';
 /** NASADEM covers 60° N to 56° S; the app falls back to AWS Terrain Tiles elsewhere or when offline. */
 export const NASADEM_LAT = [-56, 60] as const;
 

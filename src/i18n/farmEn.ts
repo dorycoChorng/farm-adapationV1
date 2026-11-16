@@ -2,7 +2,6 @@
 export const farmEn = {
   'env.step.production': 'Crops grown nearby (FAO GAEZ)',
   'env.step.zones': 'Zones across the land',
-  'env.tab.zones': 'Zones',
   'env.tab.farming': 'Farming',
   'src.gaez.limits':
     'National statistics spread over cropland by a model, so the crops for one 10 km cell are estimates. Values use fixed FAO international prices, not local market prices, and no costs are subtracted.',
