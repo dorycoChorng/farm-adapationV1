@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { type CropProfile, cropName } from '../env/crops';
 import { useI18n } from '../i18n';
-import { isCommonsUpload, photoCredit, type PhotoCredit, shortCredit } from '../plants/photoCredit';
+import { commonsFilePage, isCommonsUpload, photoCredit, type PhotoCredit, shortCredit } from '../plants/photoCredit';
 import { colors, radius, spacing } from '../theme/colors';
 import { IconButton, Ionicons, tapFeedback } from './ui';
 
@@ -27,6 +27,8 @@ interface Photo {
   /** Wikimedia Commons page of the file (author and licence). */
   filePage: string | null;
   articleTitle: string;
+  /** The Wikipedia article the photo comes from. */
+  articleUrl: string | null;
 }
 
 const SUMMARY = 'https://en.wikipedia.org/api/rest_v1/page/summary/';
@@ -38,6 +40,7 @@ interface Summary {
   title?: string;
   thumbnail?: { source: string; width: number; height: number };
   originalimage?: { source: string; width: number; height: number };
+  content_urls?: { desktop?: { page?: string }; mobile?: { page?: string } };
 }
 
 async function summaryPhoto(title: string): Promise<Photo | null> {
@@ -50,13 +53,14 @@ async function summaryPhoto(title: string): Promise<Photo | null> {
   if (!isCommonsUpload(orig.source) || !isCommonsUpload(body.thumbnail.source)) return null;
   // A 1280 px copy for zooming: Wikimedia makes one from the thumbnail URL, but only smaller than the original.
   const large = orig.width > LARGE_PX && body.thumbnail.source.includes('/thumb/') ? body.thumbnail.source.replace(/\/\d+px-/, `/${LARGE_PX}px-`) : orig.source;
-  const file = decodeURIComponent(orig.source.split('/').pop() ?? '');
+  const articleUrl = body.content_urls?.mobile?.page ?? body.content_urls?.desktop?.page ?? null;
   return {
     thumb: body.thumbnail.source,
     large,
     aspect: orig.height / orig.width,
-    filePage: file ? `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file)}` : null,
+    filePage: commonsFilePage(orig.source),
     articleTitle: body.title ?? title,
+    articleUrl: articleUrl && articleUrl.startsWith('https://') ? articleUrl : null,
   };
 }
 
@@ -154,14 +158,18 @@ export function CropPhoto({
         </View>
       </Pressable>
       {credit ? (
-        <Text
-          style={[st.thumbCredit, { color: dark ? '#d7efe1' : colors.textMuted }]}
-          numberOfLines={2}
+        <Pressable
+          accessibilityRole="link"
           accessibilityLabel={t('photo.by', { artist: credit.artist ?? '–', licence: credit.licence ?? '–' })}
+          onPress={() => photo.filePage && Linking.openURL(photo.filePage)}
+          disabled={!photo.filePage}
+          hitSlop={6}
           testID={`photo-credit-${crop.id}`}
         >
-          {shortCredit(credit)}
-        </Text>
+          <Text style={[st.thumbCredit, { color: dark ? '#d7efe1' : colors.textMuted }]} numberOfLines={2}>
+            {shortCredit(credit)}
+          </Text>
+        </Pressable>
       ) : null}
       {open ? <PhotoViewer photo={photo} title={name} scientific={crop.scientific} onClose={() => setOpen(false)} /> : null}
     </View>
@@ -219,14 +227,39 @@ function PhotoViewer({ photo, title, scientific, onClose }: { photo: Photo; titl
           <Text style={st.zoomText}>{zoom.toFixed(1)}×</Text>
           <IconButton icon="add" label={t('photo.zoomIn')} onPress={() => set(zoom + 0.5)} tone="glass" testID="photo-zoom-in" />
         </View>
-        <Pressable accessibilityRole="link" onPress={() => photo.filePage && Linking.openURL(photo.filePage)} disabled={!photo.filePage}>
-          {credit && (credit.artist || credit.licence) ? (
-            <Text style={st.creditBy} testID="photo-credit-by">
-              {t('photo.by', { artist: credit.artist ?? '–', licence: credit.licence ?? '–' })}
+        {credit && (credit.artist || credit.licence) ? (
+          <Text style={st.creditBy} testID="photo-credit-by">
+            {t('photo.byLabel')}{' '}
+            <Text
+              accessibilityRole="link"
+              style={photo.filePage ? st.link : undefined}
+              onPress={photo.filePage ? () => Linking.openURL(photo.filePage!) : undefined}
+            >
+              {credit.artist ?? '–'}
+            </Text>
+            {' · '}
+            <Text
+              accessibilityRole="link"
+              style={credit.licenceUrl ? st.link : undefined}
+              onPress={credit.licenceUrl ? () => Linking.openURL(credit.licenceUrl!) : undefined}
+              testID="photo-licence-link"
+            >
+              {credit.licence ?? '–'}
+            </Text>
+          </Text>
+        ) : null}
+        <View style={st.creditLinks}>
+          {photo.filePage ? (
+            <Text accessibilityRole="link" style={st.credit} onPress={() => Linking.openURL(photo.filePage!)} testID="photo-file-link">
+              {t('photo.fileLink')}
             </Text>
           ) : null}
-          <Text style={st.credit}>{t('photo.credit', { article: photo.articleTitle })}</Text>
-        </Pressable>
+          {photo.articleUrl ? (
+            <Text accessibilityRole="link" style={st.credit} onPress={() => Linking.openURL(photo.articleUrl!)} testID="photo-article-link">
+              {t('photo.articleLink', { article: photo.articleTitle })}
+            </Text>
+          ) : null}
+        </View>
       </View>
     </Modal>
   );
@@ -254,6 +287,8 @@ const st = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.sm },
   zoomText: { color: colors.white, fontSize: 15, fontWeight: '700', minWidth: 44, textAlign: 'center' },
   thumbCredit: { fontSize: 9, lineHeight: 11, marginTop: 2 },
+  link: { textDecorationLine: 'underline', fontWeight: '700' },
+  creditLinks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: spacing.lg },
   creditBy: { color: colors.white, fontSize: 13, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg },
   credit: { color: '#c7d6cc', fontSize: 12, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg, textDecorationLine: 'underline' },
 });
