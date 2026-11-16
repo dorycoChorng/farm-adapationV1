@@ -2,6 +2,8 @@
 
 An Expo (React Native + TypeScript) app for picking a farm location on an interactive 3D globe, getting the user's position with explicit consent, measuring farmland boundaries, and analysing a place's climate, terrain and land cover, plus the farmer's own soil test, to compare crop suitability. Everything is stored offline in SQLite. Khmer and English.
 
+Built for the **NASA Space Apps Challenge 2026**. Every outside source is free and openly licensed or public domain, and all are cited in [Sources and credits](#sources-and-credits) and in the app. The app's own code is under the [Apache License 2.0](LICENSE).
+
 - **Phase 1:** globe, GPS location, search, parcel drawing and measurement, offline storage.
 - **Phase 2:** environmental analysis from open data and an ECOCROP-style crop suitability comparison. See [Environmental analysis](#environmental-analysis-phase-2).
 - **Phase 3:** crop advice only where land cover shows farmland, season-by-season crop checks with sowing months, and a live land-cover map layer.
@@ -26,7 +28,7 @@ The screenshots come from the automated test browser, which has no access to ima
 | Draw a parcel: tap points, drag to correct, close, undo, clear | Done | `test-map.mjs` (mouse + touch), `test-app-web.mjs` |
 | Area (m², ha), perimeter, side lengths; geodesic on WGS84 | Done | `src/geo/__tests__` (against closed-form ellipsoid formulas) |
 | Save, list, open, edit, delete parcels and places in SQLite; works offline | Done | `src/db/__tests__` (real SQLite via sql.js), `test-app-web.mjs` (save, reload, edit) |
-| Layers: high-resolution Esri satellite (default), Sentinel-2 satellite, outline-only, terrain shading, borders | Done | `test-map.mjs` (tile URLs requested and layer shown) |
+| Layers: Sentinel-2 cloudless satellite (default, open licence), outline-only, terrain shading, borders | Done | `test-map.mjs` (tile URLs requested and layer shown) |
 | Environmental analysis for a point or a saved parcel: rainfall (monthly and year by year), temperature, sunlight, elevation and slope, land cover; soil from the farmer's own test | Done | `src/env/__tests__` (parsers, raster reader, orchestration), `test-app-web.mjs` (screen, with synthetic API responses) |
 | Every indicator shows source, provider, period, resolution, retrieval date, age, confidence, limitations and licence | Done | `test-app-web.mjs` |
 | Land cover (ESA WorldCover) and elevation/slope (AWS Terrain Tiles) read straight from cloud GeoTIFFs | Done | `npm run test:live` against the **real files** (Phnom Penh, a parcel south of it, Everest, open ocean) |
@@ -48,7 +50,6 @@ The screenshots come from the automated test browser, which has no access to ima
 | **Currency**: US$ by default, or the country's own currency (175 countries) converted at a dated exchange rate; bundled rates work offline and are refreshed online | Done | `src/money/__tests__`, `test-app-web.mjs` (riel) |
 | **Current season and "Plant now"**: today's month and season from the phone's date, and the crops worth sowing this month or next (best suited first, then higher value) | Done | `src/env/__tests__`, `test-app-web.mjs` (date fixed to 10 June) |
 | Common English names for crops instead of scientific names (675 of 788) | Done | `src/env/__tests__` |
-| **Plant scan**: take or choose a photo, identify it with Pl@ntNet through this project's own `/api/identify` function (key stays on the server), open the match in the crop list | Done, **not yet run against Pl@ntNet** (blocked from the build machine; needs `PLANTNET_API_KEY`) | `src/plants/__tests__` (server function and client with synthetic Pl@ntNet answers), `test-app-web.mjs` (screen) |
 | **Place names on the map** as their own layer (countries, Cambodian provinces, cities, towns; Khmer in Khmer mode), Google-Maps-like white labels with a halo, no overlaps | Done | `test-map.mjs` (place names) |
 
 **Not tested yet:** the app has not been run on a physical Android phone or emulator from this environment, which has no Android SDK or device. The Android JavaScript bundle compiles (`expo export --platform android`) and `expo prebuild` produces a valid manifest, but GPS hardware behaviour, WebView performance and Khmer font rendering need a device check. The live imagery, Nominatim and NASA POWER servers were also unreachable from the build environment, so the tests serve their own tiles and use synthetic API responses shaped like the documented formats. The WorldCover and terrain GeoTIFFs were reachable and are tested against the real files. Real tile URLs follow each provider's documented pattern, but the first device run should confirm they load. The `/worldcover/` rewrite in `vercel.json` is tested only through an equivalent local proxy, because Vercel previews can't be opened from the build environment.
@@ -157,7 +158,7 @@ npm install --save-dev sql.js @types/sql.js playwright-core @types/node esbuild 
 
 Every push is deployed by Vercel as a web preview (`vercel.json` builds `expo export --platform web`). The link appears in the pull request. The web version runs the same screens, map, measuring and storage code; GPS comes from the browser's location permission, so a phone browser works best.
 
-**Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them. For the plant scan, add `PLANTNET_API_KEY` under Settings → Environment Variables.
+**Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them.
 
 **Caching on Vercel:** the `/isric-maps/` proxy (soil pH map layer) sends `CDN-Cache-Control: max-age=2592000`, so Vercel's CDN keeps those tiles for 30 days. The `/worldcover/` and `/gaez/` proxies must **not** be cached: the app reads those GeoTIFFs in byte ranges, and Vercel's CDN caches a response by URL only, so a cached range would be served back for every other range of the file and the land-cover and crop readings would break. `vercel.json` turns caching off for them with `x-vercel-enable-rewrite-caching: 0` (Google Cloud's own `cache-control` header would otherwise switch it on). If you change a proxy, purge the old cache under Settings → Caches → Purge CDN Cache.
 
@@ -206,25 +207,23 @@ The browser tests use `playwright-core` with a system Chromium. Set `CHROMIUM_PA
 ## Known limitations
 
 - **Measurements are approximate.** Accuracy depends on how precisely points are placed on imagery and on GPS accuracy (typically ±3–10 m on phones outdoors, worse under trees or near buildings). The app says so on every measurement and is not a substitute for a cadastral survey.
-- **The default satellite layer is Esri World Imagery** (sub-metre in many regions, capture dates vary). It needs an ArcGIS account before a production release (below). The open-licence alternative, Sentinel-2 cloudless 2016, is 10 m/pixel and too coarse to trace small field edges.
+- **The satellite layer is Sentinel-2 cloudless 2016** (open licence, CC BY 4.0). It is 10 m per pixel, so small field edges can be hard to trace; the drawing tools still work on it and on the outline map.
 - **Elevation** comes from AWS Terrain Tiles, a DEM with roughly 30–90 m source resolution in most farmland, and is labelled approximate. Device GPS altitude is shown separately on the My Location screen.
 - **No offline map tiles.** Imagery is not downloaded for offline use; the bundled outline globe is what works offline. Tile caching must wait for a review of each provider's terms.
 - **Offline search** covers countries (Natural Earth 1:110m, coarse extents), saved places and typed coordinates. Provinces, districts, communes and villages need internet.
 - **Environmental values are estimates, not measurements.** Climate comes from a ~55 km reanalysis grid and land cover from a 2021 satellite classification (~77% accurate globally). Each card says so. The analysis does not predict soil: soil advice and the pH part of crop scores come only from the farmer's own soil test.
 - **Crop thresholds are indicative.** Ranges are copied unchanged from FAO ECOCROP and describe each species in general, not local varieties; no local agronomist has reviewed them, and the app labels them that way. ECOCROP's rainfall ranges are for rain-fed growing, so flooded paddy rice can score lower than farmers' experience. Seasons come from long-term averages, so a late or failed rainy season in a given year is not reflected. The Khmer names of the about 95 well-known crops were drafted for this app and need review by a Khmer speaker; the other crops show their scientific name.
 - **Prices are FAO international prices, not market prices.** Crop values use GAEZ v5's constant 2014–2016 international dollars per tonne, multiplied by GAEZ yields. They show which crops tend to earn more or less per hectare but are not today's price in a local market, and costs are not subtracted. Local market prices (FAOSTAT, WFP, Cambodia's MAFF) and agriculture's share of GDP (World Bank) were not reachable from the build environment and are not shown. Crop groups (vegetables, fruits, pulses) are group averages.
-- **Plant identification** needs internet and a Pl@ntNet API key on the server (set `PLANTNET_API_KEY` in Vercel; for phone builds also set `expo.extra.plantIdUrl` to the deployed `https://…/api/identify`). Until then the scan screen says it is not set up. Photos are sent only when the user taps Identify and are not stored by the app's server; Pl@ntNet's own terms apply to what it receives.
 - **Place-name labels** come from Natural Earth (larger towns only, not every village). Khmer names exist for countries and Cambodian provinces and towns; other places show English. A few Cambodian towns missing from Natural Earth (Sihanoukville, Poipet, Pailin, Kep, Banlung, Suong, Samraong) were added by hand in `scripts/data/places-km.json`. Khmer rendering in the build environment's headless browser lacked a Khmer font, so label shaping needs a check on a phone.
 - **Khmer translations** were drafted for this release and should be reviewed by a native speaker with agricultural vocabulary.
 - **The Cambodia shortcut** uses Natural Earth 1:110m extents, which are generalised.
 - **Area of very large shapes:** the self-intersection check uses a local flat approximation and is meant for field-sized parcels, not shapes hundreds of kilometres across. The area calculation itself is exact at any size.
 
-## Paid services and terms to review
+## Services and terms
 
 | Service | Used for | Cost / terms |
 | --- | --- | --- |
-| EOX Sentinel-2 cloudless 2016 | Alternative satellite layer (open licence) | Free, CC BY 4.0 with attribution. Newer years are CC BY-NC-SA and need a commercial licence for commercial use. |
-| Esri World Imagery | Default high-resolution satellite layer | Fine for development and evaluation. **Production use needs an ArcGIS Location Platform account and API key** (free tier, then paid). Route the key through a backend or restricted key. |
+| EOX Sentinel-2 cloudless 2016 | Satellite layer (open licence) | Free, CC BY 4.0 with attribution. Newer years are CC BY-NC-SA and need a commercial licence for commercial use, so the app uses the 2016 edition. |
 | OSM Nominatim (public) | Place search | Free, max 1 request/second, no autocomplete, identifying User-Agent required. **For production, run your own Nominatim or use a commercial geocoder** (set `expo.extra.geocoderBaseUrl`). |
 | AWS Terrain Tiles | Elevation, slope and hillshade | Free (AWS Open Data), attribution required. |
 | NASA POWER | Rainfall, temperature and sunlight | Free, no key. Public domain; credit "NASA POWER Project". |
@@ -233,10 +232,9 @@ The browser tests use `playwright-core` with a system Chromium. Set `CHROMIUM_PA
 | Natural Earth | Offline outlines, country index and place-name labels | Public domain. |
 | FAO GAEZ v5 | Crops grown nearby, yields, international prices, country totals | Free, CC BY 4.0 (FAO and IIASA). Read from FAO's public Google Cloud bucket; the web build goes through `/gaez/`. |
 | fawazahmed0 currency-api | Exchange rates for showing values in local currencies | Free, no key, CC0. Served from jsDelivr with a Cloudflare Pages fallback; a dated copy is bundled. |
-| Pl@ntNet identification API | Plant scan | Free key with a daily quota for non-commercial use; commercial use needs a paid plan. **The key must stay on the server** (`PLANTNET_API_KEY` in Vercel). |
 | EAS Build | Cloud Android builds | Free tier with queue limits; paid plans for priority builds. |
 
-No private API keys are stored in the app. The only keyed service, Pl@ntNet, is called from `api/identify.ts`, a Vercel function that reads `PLANTNET_API_KEY` from the server environment. Any other keyed source (commercial weather, a paid imagery licence) must go the same way.
+No API keys are needed or stored: every service the app calls is free and keyless.
 
 ## Environmental analysis (phase 2)
 
@@ -288,3 +286,34 @@ Central Phnom Penh from the automated test, drawn from ESA's real 2021 files: bu
 - Open sea has no WorldCover file; those tiles are left empty and the missing file is remembered so it isn't requested again.
 
 Next steps: rainfall, soil and sunlight map layers; agronomist review of the crop ranges and growing seasons; a backend proxy if keyed sources are added.
+
+## Sources and credits
+
+NASA Space Apps asks teams to use only material that is freely and publicly available or open-source licensed, and to cite every source. The same list is in the app (Offline data → **Sources and credits**) and in [`src/env/credits.ts`](src/env/credits.ts).
+
+| Source | Used for | Licence |
+| --- | --- | --- |
+| [NASA POWER](https://power.larc.nasa.gov/) (NASA Langley) | Rainfall, temperature, sunlight; rainfall year by year; rainfall and sunlight map layers | Public domain (NASA open data) |
+| [NASADEM](https://planetarycomputer.microsoft.com/dataset/nasadem) (NASA/JPL, via Microsoft Planetary Computer) | Elevation, slope, water flow, land zones, terrain shading | NASA open data |
+| [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (AWS Open Data, SRTM) | Backup elevation | Open data, attribution required |
+| [ESA WorldCover 2021 v200](https://esa-worldcover.org/) | Land cover, zones, farmland check | CC BY 4.0 |
+| [FAO GAEZ v5](https://github.com/un-fao/gaezv5/wiki) (FAO and IIASA, from FAOSTAT) | Crops grown nearby, country farm economy | CC BY 4.0 |
+| FAO ECOCROP, via the [`ecocrop`](https://pypi.org/project/ecocrop/) Python package; method after Hijmans, R package Recocrop | Crop rain, temperature and pH ranges | MIT (`ecocrop`); Recocrop GPL-3 (method only) |
+| ECOCROP English names, via the R package [`dismo`](https://cran.r-project.org/package=dismo) | Crop names | GPL-3 |
+| [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX (contains modified Copernicus Sentinel data 2016) | Satellite map | CC BY 4.0 |
+| [Natural Earth](https://www.naturalearthdata.com) | Borders and place names (offline) | Public domain |
+| [ISRIC SoilGrids 2.0](https://soilgrids.org) | Soil pH map layer | CC BY 4.0 |
+| [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) (data © OpenStreetMap contributors) | Place search | ODbL (data); light use per the usage policy |
+| [Wikimedia Commons](https://commons.wikimedia.org), via Wikipedia | Crop photos (Commons files only; each photo's author and licence shown with it) | CC BY, CC BY-SA, CC0, public domain |
+| [currency-api](https://github.com/fawazahmed0/exchange-api) and [country-to-currency](https://www.npmjs.com/package/country-to-currency) | Exchange rates, currency per country | CC0; MIT |
+| Expo, React Native, Expo Router; MapLibre GL JS; react-native-webview; GeographicLib; pako; @vercel/analytics | App, map, measuring, file reading, hosting | MIT; BSD-3-Clause; MIT; MIT; MIT and Zlib; MIT |
+
+The farmer's own soil test is the only soil data in the analysis; it stays on the device.
+
+### Use of AI
+
+Claude (Anthropic) was used as an assistant to help write, test and review parts of the code and this README. The team chose what to build, made the design decisions and checked the results. This is also stated in the app's Sources and credits screen.
+
+## Licence
+
+The app's own code is licensed under the [Apache License 2.0](LICENSE) (see also [NOTICE](NOTICE)). Data and software from others keep their own licences, listed above.

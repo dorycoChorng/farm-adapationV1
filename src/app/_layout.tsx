@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import type { ComponentType } from 'react';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, Pressable, Text, View } from 'react-native';
@@ -12,7 +13,7 @@ import { AppStateProvider } from '../state/AppState';
 import { colors, TOUCH_TARGET } from '../theme/colors';
 
 // Import Vercel Analytics only for web platform
-let Analytics: React.ComponentType | null = null;
+let Analytics: ComponentType | null = null;
 if (Platform.OS === 'web') {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -63,7 +64,7 @@ function Screens() {
       <Stack.Screen name="offline" options={{ title: t('offline.title') }} />
       <Stack.Screen name="analysis" options={{ title: t('nav.analysis') }} />
       <Stack.Screen name="crops" options={{ title: t('nav.crops') }} />
-      <Stack.Screen name="scan" options={{ title: t('scan.title') }} />
+      <Stack.Screen name="credits" options={{ title: t('credits.title') }} />
     </Stack>
   );
 }

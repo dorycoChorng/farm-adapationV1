@@ -1,6 +1,6 @@
 import type { farmEn } from './farmEn';
 
-/** Khmer strings for land zones, the second soil source, local crops, farm economics and plant scanning. Drafted; needs review by a native speaker. */
+/** Khmer strings for land zones, the second soil source, local crops and farm economics. Drafted; needs review by a native speaker. */
 export const farmKm: Record<keyof typeof farmEn, string> = {
   'env.step.production': 'ដំណាំដែលដាំនៅជិតនេះ (FAO GAEZ)',
   'env.step.zones': 'តំបន់នៅលើដី',
@@ -162,32 +162,6 @@ export const farmKm: Record<keyof typeof farmEn, string> = {
   'gaez.TOM': 'ប៉េងប៉ោះ',
   'gaez.WHE': 'ស្រូវសាលី',
 
-  'scan.button': 'ស្កេនរុក្ខជាតិ',
-  'scan.title': 'ស្គាល់រុក្ខជាតិ',
-  'scan.intro':
-    'ថត ឬជ្រើសរើសរូបថតច្បាស់នៃស្លឹក ផ្កា ឬផ្លែនៃរុក្ខជាតិមួយ។ រូបថតត្រូវបានផ្ញើទៅ Pl@ntNet ជាសេវាស្គាល់រុក្ខជាតិរបស់វិទ្យាស្ថានស្រាវជ្រាវបារាំង ហើយកម្មវិធីនេះមិនរក្សាទុកវាទេ។',
-  'scan.camera': 'ថតរូប',
-  'scan.library': 'ជ្រើសរូបថត',
-  'scan.organ': 'តើមានអ្វីក្នុងរូបថត?',
-  'scan.organ.leaf': 'ស្លឹក',
-  'scan.organ.flower': 'ផ្កា',
-  'scan.organ.fruit': 'ផ្លែ',
-  'scan.organ.auto': 'មិនប្រាកដ',
-  'scan.working': 'កំពុងស្គាល់…',
-  'scan.results': 'លទ្ធផលដែលទំនងបំផុត',
-  'scan.confidence': 'ត្រូវគ្នា {pct}%',
-  'scan.inCatalogue': 'បើកក្នុងបញ្ជីដំណាំ',
-  'scan.notInCatalogue': 'មិនមានក្នុងបញ្ជីដំណាំ',
-  'scan.lowConfidence': 'គ្មានលទ្ធផលច្បាស់លាស់។ សូមថតរូបច្បាស់ជាងនេះនៃស្លឹក ឬផ្កាមួយ ពេលថ្ងៃ។',
-  'scan.offline': 'ការស្គាល់រុក្ខជាតិត្រូវការអ៊ីនធឺណិត។',
-  'scan.notConfigured': 'ការស្គាល់រុក្ខជាតិមិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេរបស់កម្មវិធីនេះនៅឡើយ (ត្រូវការកូនសោ Pl@ntNet)។',
-  'scan.error': 'មិនអាចស្គាល់រុក្ខជាតិបាន៖ {reason}',
-  'scan.denied': 'មិនបានអនុញ្ញាតកាមេរ៉ា។ អ្នកនៅតែអាចជ្រើសរូបថត ឬអនុញ្ញាតកាមេរ៉ានៅក្នុងការកំណត់ទូរស័ព្ទ។',
-  'scan.send': 'ស្គាល់រុក្ខជាតិនេះ',
-  'scan.sendNote': 'ការចុច ស្គាល់ នឹងផ្ញើរូបថតនេះទៅ Pl@ntNet។',
-  'scan.uncertain': 'មិនប្រាកដ',
-  'scan.quota': 'ការស្គាល់ច្រើនពេកសម្រាប់ថ្ងៃនេះ។ សូមព្យាយាមម្តងទៀតនៅថ្ងៃស្អែក។',
-  'scan.credit': 'ការស្គាល់ដោយ Pl@ntNet (plantnet.org)។',
   'season.now': 'ឥឡូវ ({month})៖ {season}។',
   'season.nowNext': 'ឥឡូវ ({month})៖ {season}។ បន្ទាប់៖ {next} ចាប់ពីខែ{from}។',
   'crops.tab.now': 'ដាំឥឡូវ',

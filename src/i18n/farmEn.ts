@@ -1,4 +1,4 @@
-/** Strings for land zones, the second soil source, local crops, farm economics and plant scanning. */
+/** Strings for land zones, the second soil source, local crops and farm economics. */
 export const farmEn = {
   'env.step.production': 'Crops grown nearby (FAO GAEZ)',
   'env.step.zones': 'Zones across the land',
@@ -161,32 +161,6 @@ export const farmEn = {
   'gaez.TOM': 'Tomato',
   'gaez.WHE': 'Wheat',
 
-  'scan.button': 'Scan a plant',
-  'scan.title': 'Identify a plant',
-  'scan.intro':
-    'Take or choose a clear photo of one plant’s leaves, flower or fruit. The photo is sent to Pl@ntNet, a plant identification service run by French research institutes, and is not stored by this app.',
-  'scan.camera': 'Take photo',
-  'scan.library': 'Choose photo',
-  'scan.organ': 'What is in the photo?',
-  'scan.organ.leaf': 'Leaf',
-  'scan.organ.flower': 'Flower',
-  'scan.organ.fruit': 'Fruit',
-  'scan.organ.auto': 'Not sure',
-  'scan.working': 'Identifying…',
-  'scan.results': 'Most likely matches',
-  'scan.confidence': '{pct}% match',
-  'scan.inCatalogue': 'Open in crop list',
-  'scan.notInCatalogue': 'Not in the crop list',
-  'scan.lowConfidence': 'No confident match. Try a sharper photo of a single leaf or flower in daylight.',
-  'scan.offline': 'Plant identification needs internet.',
-  'scan.notConfigured': 'Plant identification is not set up on this app’s server yet (it needs a Pl@ntNet key).',
-  'scan.error': 'Could not identify the plant: {reason}',
-  'scan.denied': 'Camera permission was not given. You can still choose a photo, or allow the camera in your phone’s settings.',
-  'scan.send': 'Identify this plant',
-  'scan.sendNote': 'Tapping Identify sends this photo to Pl@ntNet.',
-  'scan.uncertain': 'Uncertain',
-  'scan.quota': 'Too many identifications today. Please try again tomorrow.',
-  'scan.credit': 'Identification by Pl@ntNet (plantnet.org).',
   'season.now': 'Now ({month}): {season}.',
   'season.nowNext': 'Now ({month}): {season}. Next: {next} from {from}.',
   'crops.tab.now': 'Plant now',

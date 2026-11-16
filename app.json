@@ -46,20 +46,11 @@
           "isAndroidForegroundServiceEnabled": false,
           "isIosBackgroundLocationEnabled": false
         }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Farm Adaptation lets you choose a photo of a plant to identify it. The photo is only sent when you tap Identify.",
-          "cameraPermission": "Farm Adaptation uses the camera only when you tap Take photo, to identify a plant.",
-          "microphonePermission": false
-        }
       ]
     ],
     "extra": {
       "geocoderBaseUrl": "https://nominatim.openstreetmap.org",
-      "geocoderUserAgent": "FarmAdaptationApp/0.1 (https://github.com/dorycoChorng/Farm-Adaptation-App)",
-      "plantIdUrl": null
+      "geocoderUserAgent": "FarmAdaptationApp/0.1 (https://github.com/dorycoChorng/Farm-Adaptation-App)"
     }
   }
 }

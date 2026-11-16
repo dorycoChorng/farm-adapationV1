@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -51,7 +51,6 @@ const scoreColor = (score: number | null) => suitabilityColors[classify(score)];
 
 export default function CropsScreen() {
   const { summaryId, q } = useLocalSearchParams<{ summaryId?: string; q?: string }>();
-  const router = useRouter();
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
   const { t, language } = useI18n();
@@ -65,7 +64,7 @@ export default function CropsScreen() {
   // The short list of crops farmers in this country actually grow, unless the user asks for all.
   const [commonOnly, setCommonOnly] = useState(true);
 
-  // A plant identified on the scan screen comes back as a search.
+  // A search passed in the link (/crops?q=…) fills the search box.
   const [seenQ, setSeenQ] = useState(q);
   if (q !== seenQ) {
     setSeenQ(q);
@@ -216,15 +215,6 @@ export default function CropsScreen() {
           </Pressable>
         ) : null}
       </View>
-
-      <Button
-        label={t('scan.button')}
-        icon="scan"
-        variant="soft"
-        onPress={() => router.push({ pathname: '/scan', params: { summaryId: stored.id } })}
-        testID="open-scan"
-        style={{ marginTop: spacing.sm }}
-      />
 
       <View style={s.commonRow} testID="common-toggle">
         <Chip

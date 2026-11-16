@@ -10,7 +10,6 @@ import { colors, spacing, TOUCH_TARGET } from '../theme/colors';
 import { Button, IconButton, type IconName, Ionicons, tapFeedback } from './ui';
 
 const BASE_ICONS: Record<BaseLayerId, IconName> = {
-  'satellite-esri': 'earth',
   'satellite-s2': 'planet-outline',
   outline: 'map-outline',
 };
