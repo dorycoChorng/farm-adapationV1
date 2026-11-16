@@ -299,6 +299,14 @@ export default function AnalysisScreen() {
               </Text>
             ))}
           </View>
+          <Button
+            label={t('credits.open')}
+            icon="document-text-outline"
+            variant="ghost"
+            onPress={() => router.push('/credits')}
+            testID="intro-credits"
+            style={{ marginTop: spacing.sm }}
+          />
         </Card>
       ) : null}
 

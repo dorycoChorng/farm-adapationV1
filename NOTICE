@@ -1,0 +1,8 @@
+Farm Adaptation
+Copyright 2026 Doryco Chorng
+
+This product's own code is licensed under the Apache License 2.0 (see LICENSE).
+
+It uses data and software from third parties, each under its own licence. The full list,
+with what each is used for, is in the app (Offline data → Sources and credits),
+in src/env/credits.ts and in the "Sources and credits" section of README.md.

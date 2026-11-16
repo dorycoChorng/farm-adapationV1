@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -13,6 +13,7 @@ export default function OfflineScreen() {
   const db = useSQLiteContext();
   const { t, language, setLanguage } = useI18n();
   const online = useOnline();
+  const router = useRouter();
   const [stats, setStats] = useState<StorageStats | null>(null);
   const [cleared, setCleared] = useState(false);
 
@@ -70,6 +71,14 @@ export default function OfflineScreen() {
           ]}
         />
       </Card>
+      <Button
+        label={t('credits.open')}
+        icon="document-text-outline"
+        variant="soft"
+        onPress={() => router.push('/credits')}
+        testID="open-credits"
+        style={{ marginBottom: spacing.md }}
+      />
       {cleared ? <Banner kind="success">{t('offline.cleared')}</Banner> : null}
       <Button label={t('offline.clear')} icon="trash" variant="danger" onPress={clear} />
     </ScrollView>

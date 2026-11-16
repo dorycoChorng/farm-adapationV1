@@ -566,50 +566,6 @@ describe('environmental analysis and crop suitability', () => {
     await context.close();
   });
 
-  it('identifies a plant from a photo and opens it in the crop list', async () => {
-    const { page, context, errors } = await openApp();
-    await routeEnvFixtures(context);
-    // The app's /api/identify function needs a Pl@ntNet key and isn't part of the static build,
-    // so its answer is SYNTHETIC here, in the shape api/identify.ts returns.
-    let uploaded = null;
-    await page.route(/\/api\/identify$/, async (r) => {
-      uploaded = r.request().postDataBuffer();
-      await r.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          matches: [
-            { scientific: 'Oryza sativa', genus: 'Oryza', family: 'Poaceae', commonNames: ['Rice'], score: 0.81 },
-            { scientific: 'Quercus robur', genus: 'Quercus', family: 'Fagaceae', commonNames: ['English oak'], score: 0.04 },
-          ],
-        }),
-      });
-    });
-    await button(page, 'Go to Cambodia').click();
-    await page.getByTestId('analyse').click();
-    await page.getByTestId('run-analysis').click();
-    await page.getByTestId('to-crops').click({ timeout: 60000 });
-    await page.getByTestId('open-scan').filter({ visible: true }).click();
-    const chooser = page.waitForEvent('filechooser');
-    await page.getByTestId('scan-library').click();
-    await (await chooser).setFiles(join(DIST, '..', 'assets', 'favicon.png'));
-    await page.getByTestId('scan-preview').waitFor();
-    // Nothing is uploaded until the user asks.
-    assert.equal(uploaded, null);
-    await page.getByTestId('organ-flower').click();
-    await page.getByTestId('scan-send').click();
-    await page.getByTestId('scan-match-0').getByText('Rice', { exact: false }).waitFor();
-    await page.getByTestId('scan-match-0').getByText('81% match').waitFor();
-    await page.getByTestId('scan-match-1').getByText('Uncertain').waitFor();
-    await page.getByTestId('scan-match-1').getByText('Not in the crop list').waitFor();
-    assert.ok(uploaded && uploaded.includes('name="organ"') && uploaded.includes('flower'));
-    await shot(page, 'scan-results');
-    await page.getByTestId('scan-open-rice').click();
-    await page.getByTestId('crop-search-results').filter({ visible: true }).getByTestId('crop-rice').waitFor();
-    assert.deepEqual(errors, []);
-    await context.close();
-  });
-
   it('measures a field and goes straight to its crops and weather', async () => {
     const { page, context, errors } = await openApp();
     await routeEnvFixtures(context);

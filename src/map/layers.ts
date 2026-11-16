@@ -4,7 +4,7 @@
  * are listed in the layer picker as unavailable until a provider is integrated
  * through the backend; the app does not fake them.
  */
-export type BaseLayerId = 'satellite-s2' | 'satellite-esri' | 'outline';
+export type BaseLayerId = 'satellite-s2' | 'outline';
 export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover' | 'waterflow' | 'rainfall' | 'soil' | 'sunlight';
 export type PlannedLayerId = 'rainfall' | 'soil' | 'sunlight';
 
@@ -37,19 +37,6 @@ export const BASE_LAYERS: Record<BaseLayerId, BaseLayerDef> = {
     },
     licence: 'CC BY 4.0 (2016 edition). Later editions are CC BY-NC-SA 4.0 and need a commercial licence for commercial use.',
     notes: '10 m resolution cloud-free mosaic from 2016. Good for orientation; too coarse to trace small field edges precisely.',
-  },
-  'satellite-esri': {
-    id: 'satellite-esri',
-    provider: {
-      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-      tileSize: 256,
-      minzoom: 0,
-      maxzoom: 19,
-      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-    },
-    licence:
-      'Esri terms of use. Suitable for development and evaluation; production apps need an ArcGIS Location Platform account and API key.',
-    notes: 'Sub-metre imagery in many regions, so field edges are usually visible. Capture dates vary by area.',
   },
   outline: {
     id: 'outline',
