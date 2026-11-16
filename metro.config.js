@@ -6,7 +6,7 @@ const config = getDefaultConfig(__dirname);
 // expo-sqlite on web loads SQLite as WebAssembly.
 config.resolver.assetExts.push('wasm');
 
-// ESA WorldCover, ISRIC's soil pH map, FAO GAEZ, NASA POWER and Planetary Computer storage can't be read from a browser on another origin, so the
+// ESA WorldCover, FAO GAEZ, NASA POWER and Planetary Computer storage can't be read from a browser on another origin, so the
 // web build reads them through paths on its own origin (src/env/appFetch.ts).
 // vercel.json does this in production; this does it in development.
 const PROXIES = {
@@ -15,7 +15,6 @@ const PROXIES = {
   '/nasadem/': 'https://nasademeuwest.blob.core.windows.net/nasadem-cog/',
   '/pc-sas/': 'https://planetarycomputer.microsoft.com/api/sas/',
   '/pc-data/': 'https://planetarycomputer.microsoft.com/api/data/',
-  '/isric-maps/': 'https://maps.isric.org/',
   '/power/': 'https://power.larc.nasa.gov/',
 };
 function readBody(req) {

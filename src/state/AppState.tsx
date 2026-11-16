@@ -36,7 +36,7 @@ interface AppStateValue {
 export const DEFAULT_LAYERS: LayerState = {
   // ESA Copernicus Sentinel-2 (10 m, open licence, cloud-free mosaic by EOX).
   base: 'satellite-s2',
-  overlays: { places: true, hillshade: false, boundaries: true, landcover: false, waterflow: false, rainfall: false, soil: false, sunlight: false },
+  overlays: { places: true, hillshade: false, boundaries: true, landcover: false, waterflow: false, rainfall: false, sunlight: false },
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);

@@ -59,7 +59,6 @@ export const CREDITS: Credit[] = [
     url: 'https://s2maps.eu',
   },
   { id: 'naturalearth', group: 'map', name: 'Natural Earth', by: 'Natural Earth', licence: 'Public domain', url: 'https://www.naturalearthdata.com' },
-  { id: 'soilgrids', group: 'map', name: 'SoilGrids 2.0 (soil pH layer)', by: 'ISRIC – World Soil Information', licence: 'CC BY 4.0', url: 'https://soilgrids.org' },
   {
     id: 'nominatim',
     group: 'map',

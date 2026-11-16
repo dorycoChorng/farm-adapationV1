@@ -39,7 +39,7 @@ The screenshots come from the automated test browser, which has no access to ima
 | No crop advice unless land cover shows farmland (not water, built-up, snow, mangrove, open sea, or land cover that failed to load) | Done | `src/env/__tests__`, `src/db/__tests__`, `test-app-web.mjs` (blocked when land cover can't load) |
 | Seasons (wet/dry from monthly rain in the tropics, four seasons elsewhere) and each crop's best sowing month per season, with and without irrigation | Done | `src/env/__tests__` (synthetic climates), `test-app-web.mjs` |
 | Land-cover **map layer** (ESA WorldCover, from zoom 7) | Done | `npm run test:live` and `test-app-web.mjs` read the **real files** (Phnom Penh shows as built-up); `test-map.mjs` (tile drawing) |
-| Rainfall, soil and sunlight **map layers** | **Not yet.** Listed as unavailable in the layer picker; the values are on the analysis screen | n/a |
+| Rainfall and sunlight **map layers** (NASA POWER, 0.5° grid) | Done | `src/env/__tests__/climateGrid.test.ts` |
 | Khmer/English switch, including dates, units, country names and Cambodian place names | Done | `test-app-web.mjs` (Khmer interface test) |
 | **Land zones**: the parcel (or a 400 m square around a point) split into up to 6 × 6 zones, each classed from its own land cover and slope (cropland, open, low spot, wetland, steep, trees, water, built-up) with advice per zone | Done | `src/env/__tests__` (classification), `npm run test:live` and `test-app-web.mjs` (real WorldCover files) |
 | **Crops grown nearby, prices and farm economy**: FAO GAEZ v5 harvested area and yield in the ~10 km cell around the place, value per hectare at FAO international prices, and country totals for 204 countries with a country picker | Done | `src/env/__tests__` (country tables), `npm run test:live` and `test-app-web.mjs` (**real GAEZ files**) |
@@ -160,7 +160,7 @@ Every push is deployed by Vercel as a web preview (`vercel.json` builds `expo ex
 
 **Setting up Vercel:** import the repository at vercel.com/new and leave **Root Directory** empty (the repository root, where `package.json` and `vercel.json` are). Don't pick `src` or `src/app`: Expo then can't find `package.json` and the build fails with `The expected package.json path: …/src/app/package.json does not exist`. Leave the build, output and install settings on their defaults; `vercel.json` sets them.
 
-**Caching on Vercel:** the `/isric-maps/` proxy (soil pH map layer) sends `CDN-Cache-Control: max-age=2592000`, so Vercel's CDN keeps those tiles for 30 days. The `/worldcover/` and `/gaez/` proxies must **not** be cached: the app reads those GeoTIFFs in byte ranges, and Vercel's CDN caches a response by URL only, so a cached range would be served back for every other range of the file and the land-cover and crop readings would break. `vercel.json` turns caching off for them with `x-vercel-enable-rewrite-caching: 0` (Google Cloud's own `cache-control` header would otherwise switch it on). If you change a proxy, purge the old cache under Settings → Caches → Purge CDN Cache.
+**Caching on Vercel:** the `/worldcover/` and `/gaez/` proxies must **not** be cached: the app reads those GeoTIFFs in byte ranges, and Vercel's CDN caches a response by URL only, so a cached range would be served back for every other range of the file and the land-cover and crop readings would break. `vercel.json` turns caching off for them with `x-vercel-enable-rewrite-caching: 0` (Google Cloud's own `cache-control` header would otherwise switch it on). If you change a proxy, purge the old cache under Settings → Caches → Purge CDN Cache.
 
 ## Run on Android
 
@@ -227,7 +227,6 @@ The browser tests use `playwright-core` with a system Chromium. Set `CHROMIUM_PA
 | OSM Nominatim (public) | Place search | Free, max 1 request/second, no autocomplete, identifying User-Agent required. **For production, run your own Nominatim or use a commercial geocoder** (set `expo.extra.geocoderBaseUrl`). |
 | AWS Terrain Tiles | Elevation, slope and hillshade | Free (AWS Open Data), attribution required. |
 | NASA POWER | Rainfall, temperature and sunlight | Free, no key. Public domain; credit "NASA POWER Project". |
-| ISRIC SoilGrids 2.0 map service | Soil pH map layer only | Free, no key, CC BY 4.0. Tiles come from `maps.isric.org` (WMS); the web build goes through `/isric-maps/`. |
 | ESA WorldCover 2021 | Land cover | Free, CC BY 4.0, read from the public AWS bucket. |
 | Natural Earth | Offline outlines, country index and place-name labels | Public domain. |
 | FAO GAEZ v5 | Crops grown nearby, yields, international prices, country totals | Free, CC BY 4.0 (FAO and IIASA). Read from FAO's public Google Cloud bucket; the web build goes through `/gaez/`. |
@@ -285,7 +284,7 @@ Central Phnom Penh from the automated test, drawn from ESA's real 2021 files: bu
 - On the web build, requests go through `/worldcover/`, `/gaez/` and the other proxy paths on the site's own origin: a rewrite in `vercel.json` in production and a small proxy in `metro.config.js` for `expo start --web`. Native apps read the bucket directly. Land cover for the analysis uses the same route, so the web preview can check land too.
 - Open sea has no WorldCover file; those tiles are left empty and the missing file is remembered so it isn't requested again.
 
-Next steps: rainfall, soil and sunlight map layers; agronomist review of the crop ranges and growing seasons; a backend proxy if keyed sources are added.
+Next steps: agronomist review of the crop ranges and growing seasons; a backend proxy if keyed sources are added.
 
 ## Sources and credits
 
@@ -302,7 +301,6 @@ NASA Space Apps asks teams to use only material that is freely and publicly avai
 | ECOCROP English names, via the R package [`dismo`](https://cran.r-project.org/package=dismo) | Crop names | GPL-3 |
 | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX (contains modified Copernicus Sentinel data 2016) | Satellite map | CC BY 4.0 |
 | [Natural Earth](https://www.naturalearthdata.com) | Borders and place names (offline) | Public domain |
-| [ISRIC SoilGrids 2.0](https://soilgrids.org) | Soil pH map layer | CC BY 4.0 |
 | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) (data © OpenStreetMap contributors) | Place search | ODbL (data); light use per the usage policy |
 | [Wikimedia Commons](https://commons.wikimedia.org), via Wikipedia | Crop photos (Commons files only; each photo's author and licence shown with it) | CC BY, CC BY-SA, CC0, public domain |
 | [currency-api](https://github.com/fawazahmed0/exchange-api) and [country-to-currency](https://www.npmjs.com/package/country-to-currency) | Exchange rates, currency per country | CC0; MIT |
