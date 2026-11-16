@@ -19,31 +19,52 @@ export interface Credit {
 
 export const CREDITS: Credit[] = [
   // Data used in the land analysis and crop advice.
-  { id: 'power', group: 'data', name: 'NASA POWER', by: 'NASA Langley Research Center', licence: 'Public domain (NASA open data)', url: 'https://power.larc.nasa.gov/' },
+  {
+    id: 'power',
+    group: 'data',
+    name: 'NASA POWER',
+    by: 'NASA Langley Research Center (LaRC) POWER Project, funded through the NASA Earth Science / Applied Science Program',
+    licence: 'NASA open data, no restrictions',
+    url: 'https://power.larc.nasa.gov/',
+  },
   {
     id: 'nasadem',
     group: 'data',
     name: 'NASADEM',
-    by: 'NASA / JPL, hosted by Microsoft Planetary Computer',
-    licence: 'NASA open data',
+    by: 'NASA JPL, NASADEM Merged DEM Global 1 arc second V001 (doi:10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001), hosted by Microsoft Planetary Computer',
+    licence: 'NASA open data, no restrictions',
     url: 'https://planetarycomputer.microsoft.com/dataset/nasadem',
   },
   {
     id: 'terrain',
     group: 'data',
-    name: 'Terrain Tiles (SRTM)',
-    by: 'AWS Open Data, Mapzen / Tilezen',
-    licence: 'Open data, attribution required',
-    url: 'https://registry.opendata.aws/terrain-tiles/',
+    name: 'Terrain Tiles',
+    by: 'Mapzen, on AWS Open Data. SRTM, GMTED2010 and 3DEP terrain data courtesy of the U.S. Geological Survey; ETOPO1 from the U.S. National Oceanic and Atmospheric Administration; other national sources in the full list',
+    licence: 'Open data; tap for every source’s attribution',
+    url: 'https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
   },
-  { id: 'worldcover', group: 'data', name: 'ESA WorldCover 2021 v200', by: 'European Space Agency', licence: 'CC BY 4.0', url: 'https://esa-worldcover.org/' },
-  { id: 'gaez', group: 'data', name: 'GAEZ v5 (from FAOSTAT)', by: 'FAO and IIASA', licence: 'CC BY 4.0', url: 'https://github.com/un-fao/gaezv5/wiki' },
+  {
+    id: 'worldcover',
+    group: 'data',
+    name: 'ESA WorldCover 10 m 2021 v200',
+    by: '© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (doi:10.5281/zenodo.7254221)',
+    licence: 'CC BY 4.0',
+    url: 'https://esa-worldcover.org/',
+  },
+  {
+    id: 'gaez',
+    group: 'data',
+    name: 'Global Agro-ecological Zoning version 5 (GAEZ v5)',
+    by: 'FAO & IIASA, 2025. Yields and production for 2020 from FAOSTAT (FAO)',
+    licence: 'CC BY 4.0 and the FAO Statistical Database Terms of Use. No endorsement by FAO or IIASA is implied',
+    url: 'https://github.com/un-fao/gaezv5/wiki',
+  },
   {
     id: 'ecocrop',
     group: 'data',
     name: 'FAO ECOCROP crop requirements',
-    by: 'FAO; full database published by OpenCLIM (UK Centre for Ecology & Hydrology), doi:10.5281/zenodo.10843625. Method after Hijmans, R package Recocrop (GPL-3)',
-    licence: 'Open Government Licence v3 (OpenCLIM copy)',
+    by: 'FAO; full database published by Brown, Redhead, Pywell (UK Centre for Ecology & Hydrology) and Price (University of East Anglia), EcoCrop Climatic Crop Suitability Scoring, OpenCLIM, doi:10.5281/zenodo.10843625. Method after Hijmans, R package Recocrop (GPL-3)',
+    licence: 'Contains public sector information licensed under the Open Government Licence v3.0',
     url: 'https://github.com/OpenCLIM/ecocrop',
   },
   { id: 'dismo', group: 'data', name: 'English crop names', by: 'ECOCROP, via the R package dismo', licence: 'GPL-3', url: 'https://cran.r-project.org/package=dismo' },
@@ -53,8 +74,9 @@ export const CREDITS: Credit[] = [
   {
     id: 's2',
     group: 'map',
-    name: 'Sentinel-2 cloudless 2016',
-    by: 'EOX IT Services (contains modified Copernicus Sentinel data 2016)',
+    name: 'EOX Sentinel-2 cloudless (2016)',
+    // EOX's required attribution, word for word.
+    by: 'Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)',
     licence: 'CC BY 4.0',
     url: 'https://s2maps.eu',
   },
@@ -63,9 +85,9 @@ export const CREDITS: Credit[] = [
     id: 'nominatim',
     group: 'map',
     name: 'Nominatim place search',
-    by: 'OpenStreetMap Foundation; data © OpenStreetMap contributors',
-    licence: 'ODbL (data)',
-    url: 'https://nominatim.openstreetmap.org',
+    by: 'OpenStreetMap Foundation. Data © OpenStreetMap contributors',
+    licence: 'Open Database License (ODbL); tap for the copyright page',
+    url: 'https://www.openstreetmap.org/copyright',
   },
 
   // Photos and other media.
@@ -78,7 +100,7 @@ export const CREDITS: Credit[] = [
     url: 'https://commons.wikimedia.org',
   },
   { id: 'currency', group: 'media', name: 'Exchange rates (currency-api)', by: 'Fawaz Ahmed', licence: 'CC0', url: 'https://github.com/fawazahmed0/exchange-api' },
-  { id: 'countrycurrency', group: 'media', name: 'country-to-currency', by: 'Open-source package', licence: 'MIT', url: 'https://www.npmjs.com/package/country-to-currency' },
+  { id: 'countrycurrency', group: 'media', name: 'country-to-currency', by: 'Thiago Delgado Pinto', licence: 'MIT', url: 'https://www.npmjs.com/package/country-to-currency' },
 
   // Open-source software the app is built with.
   { id: 'expo', group: 'software', name: 'Expo, React Native, Expo Router', by: 'Expo and Meta', licence: 'MIT', url: 'https://expo.dev' },

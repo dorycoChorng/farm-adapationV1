@@ -30,7 +30,8 @@ export const BASE_LAYERS: Record<BaseLayerId, BaseLayerDef> = {
       // Sentinel-2 is 10 m/pixel; beyond z14 tiles are only upscaled.
       maxzoom: 14,
       attribution:
-        '<a href="https://s2maps.eu">Sentinel-2 cloudless</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016)',
+        // Exactly as EOX asks: https://s2maps.eu (the 2016 edition is CC BY 4.0).
+        '<a href="https://s2maps.eu">Sentinel-2 cloudless - https://s2maps.eu</a> by <a href="https://eox.at">EOX IT Services GmbH</a> (Contains modified Copernicus Sentinel data 2016 &amp; 2017)',
     },
     licence: 'CC BY 4.0 (2016 edition). Later editions are CC BY-NC-SA 4.0 and need a commercial licence for commercial use.',
     notes: '10 m resolution cloud-free mosaic from 2016. Good for orientation; too coarse to trace small field edges precisely.',
@@ -66,7 +67,7 @@ export const TERRAIN_DEM: TerrainSource = {
   maxzoom: 13,
   encoding: 'terrarium',
   attribution:
-    'NASADEM (NASA/JPL) via <a href="https://planetarycomputer.microsoft.com/">Microsoft Planetary Computer</a>; backup <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (AWS Open Data)',
+    'NASADEM (NASA/JPL) via <a href="https://planetarycomputer.microsoft.com/">Microsoft Planetary Computer</a>; backup <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Terrain Tiles</a> by Mapzen (SRTM, GMTED2010 and 3DEP courtesy of the U.S. Geological Survey; ETOPO1 from NOAA; and others)',
   planetary: { dataApi: 'https://planetarycomputer.microsoft.com/api/data/v1/', collection: 'nasadem', asset: 'elevation', minzoom: 7 },
   fallbackTiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
 };
@@ -82,7 +83,8 @@ export const LAND_COVER_OVERLAY = {
   minzoom: 7,
   maxzoom: 14,
   attribution:
-    '<a href="https://esa-worldcover.org">ESA WorldCover 2021</a> v200 (CC BY 4.0), © ESA WorldCover project / contains modified Copernicus Sentinel data (2021)',
+    // Exactly as ESA asks: https://esa-worldcover.org/en/data-access
+    '© <a href="https://esa-worldcover.org">ESA WorldCover project</a> 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)',
   licence: 'CC BY 4.0',
 };
 

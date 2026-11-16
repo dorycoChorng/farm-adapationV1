@@ -1,10 +1,14 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card, Ionicons, styles as ui } from '../components/ui';
 import { CREDIT_GROUPS, CREDITS } from '../env/credits';
 import { useI18n } from '../i18n';
 import type { TranslationKey } from '../i18n/en';
 import { colors, radius, spacing } from '../theme/colors';
+
+/** Full licence texts of the open-source packages, written by scripts/build-licenses.mjs. */
+const LICENCES_URL =
+  Platform.OS === 'web' ? '/third-party-licenses.txt' : 'https://farm-adapationv1.vercel.app/third-party-licenses.txt';
 
 /** Sources and credits: every outside source the app uses, what for, its licence and a link. */
 export default function CreditsScreen() {
@@ -35,6 +39,10 @@ export default function CreditsScreen() {
           ))}
         </Card>
       ))}
+      <Pressable accessibilityRole="link" onPress={() => Linking.openURL(LICENCES_URL)} style={st.row} testID="credit-licences">
+        <Text style={[st.name, { flex: 1, color: colors.primary }]}>{t('credits.licenceTexts')}</Text>
+        <Ionicons name="open-outline" size={18} color={colors.primary} />
+      </Pressable>
       <Text style={[ui.muted, { marginTop: spacing.sm }]}>{t('credits.licence')}</Text>
     </ScrollView>
   );

@@ -6,3 +6,7 @@ This product's own code is licensed under the Apache License 2.0 (see LICENSE).
 It uses data and software from third parties, each under its own licence. The full list,
 with what each is used for, is in the app (Offline data → Sources and credits),
 in src/env/credits.ts and in the "Sources and credits" section of README.md.
+
+The full licence text and copyright notice of every open-source package in the app is
+written to third-party-licenses.txt at build time (scripts/build-licenses.mjs) and
+published with the website at https://farm-adapationv1.vercel.app/third-party-licenses.txt
