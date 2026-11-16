@@ -74,8 +74,9 @@ export const CREDITS: Credit[] = [
   {
     id: 's2',
     group: 'map',
-    name: 'Sentinel-2 cloudless - https://s2maps.eu',
-    by: 'EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)',
+    name: 'EOX Sentinel-2 cloudless (2016)',
+    // EOX's required attribution, word for word.
+    by: 'Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)',
     licence: 'CC BY 4.0',
     url: 'https://s2maps.eu',
   },
