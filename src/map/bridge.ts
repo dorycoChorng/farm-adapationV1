@@ -12,8 +12,6 @@ export interface MapInitConfig {
   baseLayers: Record<string, RasterProvider | null>;
   terrain: TerrainSource;
   elevationZoom: number;
-  /** Soil pH overlay tiles (ISRIC SoilGrids WMS). */
-  soil: RasterProvider;
   /** Rainfall and sunlight overlays: colour stops for each, and the attribution. */
   climate: { attribution: string; stops: Record<'rainfall' | 'sunlight', [number, string][]> };
   /** Land-cover overlay: zoom range, attribution and the colour for each class code. */

@@ -128,15 +128,6 @@ export async function listLocations(db: SqlDb): Promise<SavedLocation[]> {
   return rows.map(toLocation);
 }
 
-export async function getLocation(db: SqlDb, id: string): Promise<SavedLocation | null> {
-  const row = await db.getFirstAsync<LocationRow>('SELECT * FROM saved_locations WHERE id = ?', [id]);
-  return row ? toLocation(row) : null;
-}
-
-export async function renameLocation(db: SqlDb, id: string, name: string, now = Date.now()): Promise<void> {
-  await db.runAsync('UPDATE saved_locations SET name = ?, updated_at = ? WHERE id = ?', [name, now, id]);
-}
-
 export async function deleteLocation(db: SqlDb, id: string): Promise<void> {
   await db.runAsync('DELETE FROM saved_locations WHERE id = ?', [id]);
 }

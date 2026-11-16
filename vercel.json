@@ -26,10 +26,6 @@
       "destination": "https://planetarycomputer.microsoft.com/api/data/:path*"
     },
     {
-      "source": "/isric-maps/:path*",
-      "destination": "https://maps.isric.org/:path*"
-    },
-    {
       "source": "/power/:path*",
       "destination": "https://power.larc.nasa.gov/:path*"
     },
@@ -85,15 +81,6 @@
         {
           "key": "x-vercel-enable-rewrite-caching",
           "value": "0"
-        }
-      ]
-    },
-    {
-      "source": "/isric-maps/:path*",
-      "headers": [
-        {
-          "key": "CDN-Cache-Control",
-          "value": "max-age=2592000"
         }
       ]
     },

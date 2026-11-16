@@ -72,15 +72,6 @@ export async function latestSummaryNear(db: SqlDb, latitude: number, longitude: 
   return row ? toSummary(row) : null;
 }
 
-export async function listSummaries(db: SqlDb, limit = 50): Promise<StoredSummary[]> {
-  const rows = await db.getAllAsync<SummaryRow>('SELECT * FROM env_summaries ORDER BY created_at DESC LIMIT ?', [limit]);
-  return rows.map(toSummary);
-}
-
-export async function deleteSummary(db: SqlDb, id: string): Promise<void> {
-  await db.runAsync('DELETE FROM env_summaries WHERE id = ?', [id]);
-}
-
 /** Keep the crop catalogue in SQLite for offline use; rewritten only when the catalogue version changes. */
 export function upsertCropProfiles(db: SqlDb, crops: CropProfile[], now = Date.now()): Promise<void> {
   // One rewrite at a time per database: leaving and reopening the crop screen quickly

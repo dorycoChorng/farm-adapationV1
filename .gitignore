@@ -42,3 +42,8 @@ yarn-error.*
 
 # generated map page
 src/map/generated/
+
+# Python and IDE files
+__pycache__/
+*.pyc
+.idea/

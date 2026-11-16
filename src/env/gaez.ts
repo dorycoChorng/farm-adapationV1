@@ -25,7 +25,6 @@ export type GaezCode = (typeof GAEZ_CODES)[number];
 /** Crop groups made of many different crops; their yields and values are group averages. */
 export const GAEZ_GROUPS = new Set<GaezCode>(['FRT', 'OVG', 'NES', 'PLS', 'OCE', 'OOC', 'ORT', 'FDD']);
 
-export const GAEZ_SOURCE = table.source;
 export const GAEZ_BASE = 'https://storage.googleapis.com/fao-gismgr-gaez-v5-data/DATA/GAEZ-V5/MAPSET';
 /** International price, I$ (2014–2016) per tonne; null for fodder, which GAEZ does not price. */
 export const GAEZ_PRICES = table.prices as Record<GaezCode, number | null>;
@@ -56,9 +55,6 @@ export function countryProduction(iso3: string | null): CountryProduction | null
     }),
   };
 }
-
-/** Countries with GAEZ data, for the country comparison list. */
-export const GAEZ_COUNTRIES = Object.keys(COUNTRIES);
 
 // ------------------------------------------------------------ crops ↔ GAEZ codes
 

@@ -341,44 +341,6 @@ export function ListItem({
   );
 }
 
-/** Large square action with a coloured icon disc, for the main actions on a screen. */
-export function ActionTile({
-  icon,
-  label,
-  onPress,
-  color = colors.primary,
-  bg = colors.primaryLight,
-  disabled,
-  testID,
-}: {
-  icon: IconName;
-  label: string;
-  onPress: () => void;
-  color?: string;
-  bg?: string;
-  disabled?: boolean;
-  testID?: string;
-}) {
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      testID={testID}
-      style={[styles.tile, disabled && styles.disabled]}
-    >
-      <View style={[styles.tileIcon, { backgroundColor: bg }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <Text style={styles.tileLabel} numberOfLines={3}>
-        {label}
-      </Text>
-    </PressableScale>
-  );
-}
-
 /** A rounded action button like Google Maps' "Directions / Save / Share" row: filled for the main action, tonal for the rest. */
 export function Pill({
   icon,
@@ -526,22 +488,6 @@ export function EmptyState({ icon, title, text, action }: { icon: IconName; titl
   );
 }
 
-/** Pulsing placeholder while data loads. */
-export function Skeleton({ height = 16, width = '100%', style }: { height?: number; width?: number | `${number}%`; style?: ViewStyle }) {
-  const pulse = useState(() => new Animated.Value(0.5))[0];
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 650, useNativeDriver: nativeDriver }),
-        Animated.timing(pulse, { toValue: 0.5, duration: 650, useNativeDriver: nativeDriver }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse]);
-  return <Animated.View style={[{ height, width, borderRadius: 8, backgroundColor: colors.border, opacity: pulse }, style]} />;
-}
-
 /** Fades and slides its children in on mount; used for content that arrives late. */
 export function FadeIn({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: ViewStyle }) {
   const v = useState(() => new Animated.Value(0))[0];
@@ -625,16 +571,6 @@ export const styles = StyleSheet.create({
   listIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   listTitle: { fontSize: 14, fontWeight: '600', color: colors.text },
   listSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-  tile: {
-    flex: 1,
-    flexBasis: 0,
-    minWidth: 0,
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: spacing.sm,
-  },
-  tileIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  tileLabel: { fontSize: 11.5, lineHeight: 15, fontWeight: '600', color: colors.text, textAlign: 'center', alignSelf: 'stretch' },
   sectionTitle: {
     flexDirection: 'row',
     justifyContent: 'space-between',

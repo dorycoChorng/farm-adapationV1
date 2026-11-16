@@ -1,12 +1,9 @@
 /**
  * Map layer catalogue. Each entry records provider, licence and attribution so
- * the app never shows imagery without its source. `status: 'planned'` layers
- * are listed in the layer picker as unavailable until a provider is integrated
- * through the backend; the app does not fake them.
+ * the app never shows imagery without its source.
  */
 export type BaseLayerId = 'satellite-s2' | 'outline';
-export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover' | 'waterflow' | 'rainfall' | 'soil' | 'sunlight';
-export type PlannedLayerId = 'rainfall' | 'soil' | 'sunlight';
+export type OverlayId = 'places' | 'hillshade' | 'boundaries' | 'landcover' | 'waterflow' | 'rainfall' | 'sunlight';
 
 export interface RasterProvider {
   tiles: string[];
@@ -96,32 +93,5 @@ export const LAND_COVER_OVERLAY = {
  */
 export const WATER_FLOW_OVERLAY = { minzoom: 10 };
 
-/**
- * Soil overlay: topsoil pH (0–5 cm) from ISRIC SoilGrids 2.0, drawn by ISRIC's own map
- * service (OGC WMS) in its standard colours. No space agency maps soil chemistry, so this
- * one comes from soil survey data and models. The service can take several seconds per
- * tile; the web build reads it through /isric-maps/, where Vercel caches the tiles.
- */
-export const SOIL_OVERLAY: RasterProvider = {
-  tiles: [
-    'https://maps.isric.org/mapserv?map=/map/phh2o.map&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=phh2o_0-5cm_mean&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=true',
-  ],
-  tileSize: 256,
-  minzoom: 0,
-  // At zoom 10 a pixel is ~150 m, finer than SoilGrids' 250 m; closer in, the map enlarges
-  // these tiles instead of asking ISRIC's slow service for new ones.
-  maxzoom: 10,
-  attribution: '<a href="https://soilgrids.org">SoilGrids 2.0</a> (ISRIC, CC BY 4.0)',
-};
-export const SOIL_OVERLAY_LICENCE = 'CC BY 4.0, ISRIC – World Soil Information';
-
 /** Rainfall and sunlight overlays (NASA POWER, src/env/climateGrid.ts) show from about country zoom. */
 export const CLIMATE_OVERLAY = { minzoom: 5, attribution: '<a href="https://power.larc.nasa.gov/">NASA POWER</a> climatology' };
-
-export interface PlannedLayer {
-  id: PlannedLayerId;
-  candidateSources: string;
-}
-
-/** Layers listed as coming soon; all three earlier ones (rainfall, soil, sunlight) are now real overlays. */
-export const PLANNED_LAYERS: PlannedLayer[] = [];

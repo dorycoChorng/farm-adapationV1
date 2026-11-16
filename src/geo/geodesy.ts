@@ -54,11 +54,6 @@ export function segmentsOf(points: readonly LatLng[], closed: boolean): Segment[
   return segments;
 }
 
-/** Length of an open polyline, in metres. */
-export function pathLengthMeters(points: readonly LatLng[]): number {
-  return segmentsOf(points, false).reduce((sum, s) => sum + s.lengthMeters, 0);
-}
-
 /**
  * Area, perimeter and edge lengths of a closed parcel boundary.
  * Vertex order (clockwise or counter-clockwise) does not matter.

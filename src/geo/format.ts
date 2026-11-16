@@ -4,10 +4,6 @@ export function formatCoordinate(value: number, positive: string, negative: stri
   return `${Math.abs(value).toFixed(digits)}° ${value >= 0 ? positive : negative}`;
 }
 
-export function formatLatLng(p: LatLng, digits = 6): string {
-  return `${formatCoordinate(p.latitude, 'N', 'S', digits)}, ${formatCoordinate(p.longitude, 'E', 'W', digits)}`;
-}
-
 /** Decimal pair as typed into other tools, e.g. "11.556400, 104.928200". */
 export function formatDecimalPair(p: LatLng, digits = 6): string {
   return `${p.latitude.toFixed(digits)}, ${p.longitude.toFixed(digits)}`;

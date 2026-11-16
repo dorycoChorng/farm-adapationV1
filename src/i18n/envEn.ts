@@ -4,10 +4,6 @@ export const envEn = {
   'nav.crops': 'Crop suitability',
 
   'globe.analyse': 'Analyse land',
-  'globe.explore': 'Explore',
-  'globe.cambodiaSub': 'Fly to Cambodia on the globe',
-  'globe.savedSub': 'Your places, fields and analyses',
-  'globe.offlineSub': 'What works without internet',
 
   'saved.analyse': 'Analyse',
 
@@ -159,7 +155,6 @@ export const envEn = {
   'land.not-farmland.title': 'No crop advice: not farmland',
   'land.not-farmland.body':
     'Only {pct}% of this place is mapped as land that could be farmed. Most of it is {cls}. Draw the parcel around the field itself, or pick another place.',
-  'land.ok': 'Land cover shows farmable land ({pct}%).',
   'land.toCropsBlocked': 'Crop advice needs land',
   'season.wet': 'Wet season',
   'season.dry': 'Dry season',

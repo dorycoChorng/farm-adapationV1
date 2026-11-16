@@ -136,9 +136,6 @@ export function seasonalAssessment(summary: EnvSummary, results: CropResult[]): 
 
 // ------------------------------------------------------------ what to plant now
 
-/** The season a month (0 = January) falls in. */
-export const seasonOf = (seasons: Season[], month: number): Season | null => seasons.find((x) => x.months.includes(month)) ?? null;
-
 export interface PlantNowCrop {
   cropId: string;
   /** Sowing this month or next: the better of the two. */

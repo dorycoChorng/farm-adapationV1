@@ -6,10 +6,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'nav.crops': 'ភាពសមស្របនៃដំណាំ',
 
   'globe.analyse': 'វិភាគដី',
-  'globe.explore': 'ស្វែងយល់',
-  'globe.cambodiaSub': 'ហោះទៅកម្ពុជានៅលើផែនដី',
-  'globe.savedSub': 'ទីតាំង ចម្ការ និងការវិភាគរបស់អ្នក',
-  'globe.offlineSub': 'អ្វីដែលដំណើរការដោយគ្មានអ៊ីនធឺណិត',
 
   'saved.analyse': 'វិភាគ',
 
@@ -161,7 +157,6 @@ export const envKm: Record<keyof typeof envEn, string> = {
   'land.not-farmland.title': 'គ្មានការណែនាំដំណាំ៖ មិនមែនដីកសិកម្ម',
   'land.not-farmland.body':
     'មានតែ {pct}% នៃទីតាំងនេះដែលត្រូវបានគូសផែនទីជាដីអាចធ្វើកសិកម្មបាន។ ភាគច្រើនគឺ {cls}។ សូមគូរក្បាលដីជុំវិញស្រែចម្ការផ្ទាល់ ឬជ្រើសទីតាំងផ្សេង។',
-  'land.ok': 'គម្របដីបង្ហាញដីអាចធ្វើកសិកម្មបាន ({pct}%)។',
   'land.toCropsBlocked': 'ការណែនាំដំណាំត្រូវការដី',
   'season.wet': 'រដូវវស្សា',
   'season.dry': 'រដូវប្រាំង',
