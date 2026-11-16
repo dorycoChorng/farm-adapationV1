@@ -60,7 +60,8 @@ export const CROPS: CropProfile[] = (catalogue.crops as unknown as Row[]).map(([
   ecocropId,
 }));
 
-export const CROP_PROFILE_VERSION = 4;
+// 5: crop ranges now read from the OpenCLIM copy of the FAO ECOCROP database.
+export const CROP_PROFILE_VERSION = 5;
 export const CROP_PROFILE_SOURCE = catalogue.source;
 
 const byId = new Map(CROPS.map((c) => [c.id, c]));

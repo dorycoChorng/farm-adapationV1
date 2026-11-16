@@ -131,7 +131,7 @@ export const envEn = {
   'crops.method':
     'For each sowing month, the app adds up the average rain and averages the temperature over the crop’s growing months, then compares them with the crop’s ECOCROP ranges. Soil pH is compared too once you enter your own soil test; without one it is left out. Each condition scores 100 inside the preferred range and falls in a straight line to 0 at the edge of what the crop tolerates. A month’s score is its lowest condition (the limiting factor), and the crop’s score is its best month, as in the ECOCROP model (Hijmans, R package Recocrop). Missing rain or temperature data lowers the confidence.',
   'env.unitSolar': 'kWh/m²/day',
-  'crops.profileSource': 'Crop ranges: FAO ECOCROP database (2023 export, from the ecocrop 0.2.0 package). English crop names: ECOCROP, via the R package dismo.',
+  'crops.profileSource': 'Crop ranges: FAO ECOCROP database, as published in full by the OpenCLIM project (UK Centre for Ecology & Hydrology, Open Government Licence v3). English crop names: ECOCROP, via the R package dismo.',
 
   'suit.high': 'Highly suitable',
   'suit.moderate': 'Suitable',
