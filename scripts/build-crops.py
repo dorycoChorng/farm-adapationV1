@@ -1,27 +1,27 @@
-""""
-Builds src/data/ecocrop.json, the crop catalogue bundled with the app, from the FAO
-ECOCROP database export shipped in the `ecocrop` 0.2.0 package on PyPI
-(data/Ecocrop_updated_1312023.xlsx). The export is not committed; download it with:
+"""
+Builds src/data/ecocrop.json, the crop catalogue bundled with the app, from the full FAO
+ECOCROP database as published by the OpenCLIM project (UK Centre for Ecology & Hydrology):
+EcoCrop_DB.csv in https://github.com/OpenCLIM/ecocrop (Brown, Redhead, Pywell and Price,
+doi:10.5281/zenodo.10843625; Open Government Licence v3). The CSV is not committed;
+download the pinned version with:
 
-  curl -LO https://files.pythonhosted.org/packages/e6/49/21e41c36b7c705ce99ba7638278adb957abc3a9d859581afe0db16c9ec63/ecocrop-0.2.0.tar.gz
-  tar xzf ecocrop-0.2.0.tar.gz
-  python3 -m pip install openpyxl
-  python3 scripts/build-crops.py ecocrop-0.2.0/data/Ecocrop_updated_1312023.xlsx
+  curl -LO https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv
+  python3 scripts/build-crops.py EcoCrop_DB.csv
+
+Which crops: the food crops listed in scripts/data/crop-selection.json (app id and FAO
+EcoCrop code), chosen from ECOCROP's food categories and main uses with complete
+temperature, rainfall and pH ranges. Values are copied unchanged from the CSV.
 
 English names come from scripts/data/ecocrop-english-names.json (ECOCROP's English common
 names, from the R package dismo); curated English and Khmer names for well-known crops
 from scripts/data/crop-names.json.
-
-Kept: every species ECOCROP lists as a food crop (cereals, pulses, roots and tubers,
-vegetables, fruits and nuts, or main use food/beverage/food additive) with complete
-temperature, rainfall and pH ranges. Values are copied unchanged.
 """
 import json
 import re
 import sys
 from pathlib import Path
 
-import openpyxl
+import csv
 
 ROOT = Path(__file__).resolve().parent.parent
 FOOD_CATEGORIES = [
@@ -36,7 +36,10 @@ NAME_OK = re.compile(r"^[A-Za-zÀ-ÿ' .()\-]{2,40}$")
 
 
 def num(v):
-    return float(v) if isinstance(v, (int, float)) else None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None  # empty or "NA"
 
 
 def rng(d, a_min, o_min, o_max, a_max):
@@ -90,38 +93,34 @@ def english_names():
 def main(src):
     names = json.loads((ROOT / "scripts/data/crop-names.json").read_text())
     english = english_names()
-    ws = openpyxl.load_workbook(src, read_only=True).worksheets[0]
-    rows = list(ws.iter_rows(values_only=True))
-    header = rows[0]
-    out, skipped, seen_ids = [], 0, set()
-    for r in rows[1:]:
-        d = dict(zip(header, r))
-        sci = (d.get("species") or "").strip()
-        if not sci:
+    selection = json.loads((ROOT / "scripts/data/crop-selection.json").read_text())["crops"]
+    # The OpenCLIM CSV is Windows-1252 encoded.
+    with open(src, encoding="cp1252", errors="replace", newline="") as f:
+        rows = {r["EcoPortCode"].strip(): r for r in csv.DictReader(f)}
+    out, missing_codes = [], []
+    for cid, code in selection:
+        d = rows.get(str(code))
+        if d is None:
+            missing_codes.append(code)
             continue
-        cats = [c.strip() for c in str(d.get("Category") or "").split(",")]
+        sci = d["ScientificName"].strip()
+        cats = [c.strip() for c in d.get("CAT", "").split(",")]
         cat = next((short for long, short in FOOD_CATEGORIES if long in cats), None)
-        use = str(d.get("use.main") or "")
         curated = names.get(sci)
-        if not (cat or use in FOOD_USES or curated):
-            continue
-        temp = rng(d, "Temp_Abs_Min", "temp_opt_min", "Temp_Opt_Max", "Temp_Abs_Max")
-        rain = rng(d, "Rain_Abs_Min", "Rain_Opt_Min", "Rain_Opt_Max", "Rain_Abs_Max")
-        ph = rng(d, "pH_Abs_Min", "pH_Opt_Min", "pH_Opt_Max", "pH_Abs_Max")
+        temp = rng(d, "TMIN", "TOPMN", "TOPMX", "TMAX")
+        rain = rng(d, "RMIN", "ROPMN", "ROPMX", "RMAX")
+        ph = rng(d, "PHMIN", "PHOPMN", "PHOPMX", "PHMAX")
         if not (temp and rain and ph):
-            skipped += 1
+            missing_codes.append(code)
             continue
         common, lower = [], set()
-        for n in str(d.get("Common_names") or "").split(","):
+        # Alphabetical, as in FAO's own export, so the fallback English name is stable.
+        for n in sorted(d.get("COMNAME", "").split(","), key=lambda x: x.strip().lower()):
             n = n.strip()
             if NAME_OK.match(n) and n.lower() not in lower:
                 lower.add(n.lower())
                 common.append(n)
-        cid = curated["id"] if curated else f"ec-{int(d['crop_code'])}"
-        if cid in seen_ids:
-            continue
-        seen_ids.add(cid)
-        cmin, cmax = num(d.get("cycle_min")), num(d.get("cycle_max"))
+        cmin, cmax = num(d.get("GMIN")), num(d.get("GMAX"))
         # Display name: curated, else ECOCROP's English name, else its first listed common name.
         en = (curated or {}).get("en") or english(sci) or likely_english(common)
         if en and en.lower() == sci.lower():
@@ -137,22 +136,20 @@ def main(src):
             rain,
             ph,
             [cmin, cmax] if cmin and cmax and cmin > 0 and cmax >= cmin else None,
-            int(d["crop_code"]),
+            int(code),
             1 if curated else 0,
         ])
-    missing = [s for s in names if not s.startswith("_") and s not in {c[1] for c in out}]
     out.sort(key=lambda c: (not c[11], c[3] is None, (c[3] or c[1]).lower()))
     doc = {
-        "source": "FAO ECOCROP database, export Ecocrop_updated_1312023.xlsx from the ecocrop 0.2.0 package (PyPI)",
+        "source": "FAO ECOCROP database, EcoCrop_DB.csv from OpenCLIM/ecocrop (UKCEH, doi:10.5281/zenodo.10843625, Open Government Licence v3)",
         "fields": ["id", "scientific", "category", "en", "km", "names", "temp", "rain", "ph", "cycleDays", "ecocropId", "known"],
         "crops": out,
     }
     target = ROOT / "src/data/ecocrop.json"
     target.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")) + "\n")
-    print(f"{len(out)} crops written, {skipped} food crops skipped for incomplete ranges, "
-          f"{target.stat().st_size // 1024} KiB")
-    if missing:
-        print("curated names not found in ECOCROP:", ", ".join(missing))
+    print(f"{len(out)} crops written, {target.stat().st_size // 1024} KiB")
+    if missing_codes:
+        print("selected crops not found or incomplete in the CSV:", missing_codes)
 
 
 if __name__ == "__main__":
